@@ -119,17 +119,20 @@ const RehydrationRendererFactory: RendererFactory3 = {
 
 let patched = false;
 let oldAppendChild: (<T extends Node>(child: T) => T)|null = null;
+
+function patchedAppendChild<T extends Node>(child: T): T {
+  if (child['__REHYDRATED__']) {
+    return child;
+  }
+  return oldAppendChild.call(this, child);
+};
+
 function patchAppendChild() {
   if (patched) {
     return;
   }
   oldAppendChild = Element.prototype.appendChild;
-  Element.prototype.appendChild = <T extends Node>(child: T): T => {
-    if (child['__REHYDRATED__']) {
-      return child;
-    }
-    return oldAppendChild.call(this, child);
-  };
+  Element.prototype.appendChild = patchedAppendChild;
   patched = true;
 }
 
