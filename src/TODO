@@ -1,0 +1,4 @@
+ - Turn on strict flags in tsconfig
+ - Why is RElement not assignable to Element and vice versa?
+ - Maybe Ivy instructions can be instructed not to append child if it found
+   that the node returned from the renderer is rehydrated.
