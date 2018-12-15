@@ -2,10 +2,12 @@
 import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
+import { LinkHeader } from './link_header';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    LinkHeader,
   ],
   imports: [],
   providers: [],

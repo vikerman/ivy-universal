@@ -1,4 +1,6 @@
- - Turn on strict flags in tsconfig
- - Why is RElement not assignable to Element and vice versa?
- - Maybe Ivy instructions can be instructed not to append child if it found
+- Turn on strict flags in tsconfig
+- Why is RElement not assignable to Element and vice versa?
+- Maybe Ivy instructions can be instructed not to append child if it found
    that the node returned from the renderer is rehydrated.
+- Need to support projection when using components or elements. Need hook from
+  Ivy on `elementEnd`.

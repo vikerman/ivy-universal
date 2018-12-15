@@ -39,8 +39,13 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
 
     // Try to go one level down.
     const last = this.current;
-    let next: Node;
-    next = this.current.firstChild;
+    let next:Node|null = null;
+    if (isBuiltInNode(last)) {
+      // TODO: For now only descend to children if it's a standard HTML elements.
+      // We don't support content projection for Components/Elements until we
+      // get a hook from Ivy to the renderer on `endElement()`.
+      next = this.current.firstChild;
+    }
 
     // If there are no nodes below - Go to the next sibling.
     // If there are no siblings - Go to the sibling of the parent and continue
@@ -114,6 +119,22 @@ const RehydrationRendererFactory: RendererFactory3 = {
       return document;
     }
     return RehydrationRenderer.create(hostElement);
+  }
+}
+
+function isBuiltInNode(n: Node) {
+  if (n.nodeType !== Node.ELEMENT_NODE) {
+    return true;
+  }
+
+  // If it's an unknown element or known custom element return as not built-in.
+  const el: HTMLElement = n as HTMLElement;
+  if (el.tagName.indexOf('-') > 0 ||
+      el.constructor === HTMLUnknownElement ||
+      customElements.get(el.localName) != null) {
+    return false;
+  } else {
+    return true;
   }
 }
 
