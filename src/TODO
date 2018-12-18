@@ -4,3 +4,10 @@
    that the node returned from the renderer is rehydrated.
 - Need to support projection when using components or elements. Need hook from
   Ivy on `elementEnd`.
+- Need to support <ng-container>. It is similar to templates created for *ngIf,
+  *ngFor but the content is immediately evaluated instead of at the end of the
+  current view creation. We need some way in Ivy to differentiate between a
+  ng-container and other kinds of embedded templates - Maybe usign a different
+  comment data.
+- Need to handle comment markers in ngDevMode on and off. Currently we assume
+  ngDevMode is always off on the server.

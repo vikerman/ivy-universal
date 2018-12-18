@@ -1,5 +1,7 @@
 
-import { NgModule } from '@angular/core';
+import { NgModule, ViewContainerRef, TemplateRef} from '@angular/core';
+import { directiveInject, defineDirective } from '@angular/core/src/render3/index';
+import { CommonModule } from '@angular/common';
 
 import { AppComponent } from './app.component';
 import { LinkHeader } from './link_header';
@@ -9,8 +11,8 @@ import { LinkHeader } from './link_header';
     AppComponent,
     LinkHeader,
   ],
-  imports: [],
+  imports: [CommonModule],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
 export class AppModule { }
