@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 4000;
 const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
-const {AppComponent} = require('./dist/server/main');
+const {AppComponent} = require('../dist/server/main');
 
 // Should match
 // node_modules/domino/lib/MutationConstants.js
