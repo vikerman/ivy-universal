@@ -5,7 +5,7 @@ import { RendererFactory3, ObjectOrientedRenderer3 } from '@angular/core/src/ren
 enum MutationType {
   VALUE = 1,  // The value of a Text, Comment or PI node changed
   ATTR = 2,   // A new attribute was added or an attribute value and/or prefix
-              // changed
+  // changed
   REMOVE_ATTR = 3,  // An attribute was removed
   REMOVE = 4,       // A node was removed
   MOVE = 5,         // A node was moved
@@ -14,9 +14,9 @@ enum MutationType {
 
 interface DominoMutationEvent {
   type: MutationType;
-  target: HTMLElement&{[k: string]: Function | undefined};
-  node?: HTMLElement&{[k: string]: Function | undefined};
-  attr?: {data: string, name: string};
+  target: HTMLElement & { [k: string]: Function | undefined };
+  node?: HTMLElement & { [k: string]: Function | undefined };
+  attr?: { data: string, name: string };
 }
 
 const START_COMMENT = '__start__';
@@ -36,7 +36,7 @@ const createServerRenderer = (doc: Document): ObjectOrientedRenderer3 => {
       return endComment;
     },
     createElement: (tag: string) => doc.createElement(tag),
-    createElementNS: (namespace: string, tag: string) => 
+    createElementNS: (namespace: string, tag: string) =>
       doc.createElementNS(namespace, tag) as any,
     createTextNode: (data: string) => doc.createTextNode(data),
     querySelector: (selectors: string) => doc.querySelector(selectors) as any,

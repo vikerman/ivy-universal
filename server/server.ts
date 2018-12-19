@@ -7,8 +7,7 @@ import * as domino from 'domino';
 import { ɵrenderComponent as renderComponent } from '@angular/core';
 
 import * as express from 'express';
-import {join} from 'path';
-import { RendererFactory3, ObjectOrientedRenderer3 } from '@angular/core/src/render3/interfaces/renderer';
+import { join } from 'path';
 import { getRendererFactory } from './renderer_factory';
 
 // Enable Production mode in Ivy.
@@ -21,25 +20,25 @@ const PORT = process.env.PORT || 4000;
 const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
-const {AppComponent} = require('../dist/server/main');
+const { AppComponent } = require('../dist/server/main');
 
 // Universal express-engine.
-app.engine('html', 
-    (filePath: string, 
-     options: {},
-     callback: (err?: Error | null, html?: string) => void) => {
-  try {
-    const doc: Document = domino.createDocument(getDocument(filePath));
-    const rendererFactory = getRendererFactory(doc);
-    
-    // Render the app component.
-    renderComponent(AppComponent, {rendererFactory});
+app.engine('html',
+  (filePath: string,
+    options: {},
+    callback: (err?: Error | null, html?: string) => void) => {
+    try {
+      const doc: Document = domino.createDocument(getDocument(filePath));
+      const rendererFactory = getRendererFactory(doc);
 
-    callback(null, doc.documentElement.outerHTML);
-  } catch (e) {
-    callback(e);
-  }
-});
+      // Render the app component.
+      renderComponent(AppComponent, { rendererFactory });
+
+      callback(null, doc.documentElement.outerHTML);
+    } catch (e) {
+      callback(e);
+    }
+  });
 
 app.set('view engine', 'html');
 app.set('views', DIST_FOLDER);
@@ -72,4 +71,3 @@ const templateCache: { [key: string]: string } = {};
 function getDocument(filePath: string): string {
   return templateCache[filePath] = templateCache[filePath] || fs.readFileSync(filePath).toString();
 }
-
