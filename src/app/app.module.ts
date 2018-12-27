@@ -1,18 +1,13 @@
-
-import { NgModule, ViewContainerRef, TemplateRef} from '@angular/core';
-import { directiveInject, defineDirective } from '@angular/core/src/render3/index';
-import { CommonModule } from '@angular/common';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 
 import { AppComponent } from './app.component';
-import { LinkHeader } from './link_header';
 
 @NgModule({
   declarations: [
     AppComponent,
-    LinkHeader,
   ],
-  imports: [CommonModule],
   providers: [],
   bootstrap: [AppComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class AppModule { }

@@ -1,14 +1,24 @@
-import 'zone.js/dist/zone-node';
-import 'reflect-metadata';
-
 import * as fs from 'fs';
-import * as domino from 'domino';
+
+// tslint:disable-next-line:no-any
+(global as any).__domino_frozen__ = false;
+
+// TODO : Replace with actual domino once https://github.com/fgnass/domino/pull/138
+// is merged.
+import * as domino from 'ivy-domino';
+
+// Setup global class types that are needed since devmode sources don't
+// down-level decorators which point to these values during runtime.
+Object.assign(global, (domino as any).impl);
+
+// tslint:enable:no-any
 
 import { ɵrenderComponent as renderComponent } from '@angular/core';
 
 import * as express from 'express';
 import { join } from 'path';
-import { getRendererFactory } from './renderer_factory';
+import { getRendererFactory } from './server_renderer_factory';
+import { patchDocument } from './custom_elements_shim';
 
 // Enable Production mode in Ivy.
 (global as any).ngDevMode = false;
@@ -20,7 +30,7 @@ const PORT = process.env.PORT || 4000;
 const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
-const { AppComponent } = require('../dist/server/main');
+const { AppComponent, ELEMENTS_MAP, bootstrapCustomElement } = require('../dist/server/main');
 
 // Universal express-engine.
 app.engine('html',
@@ -29,12 +39,23 @@ app.engine('html',
     callback: (err?: Error | null, html?: string) => void) => {
     try {
       const doc: Document = domino.createDocument(getDocument(filePath));
+      patchDocument(doc);
       const rendererFactory = getRendererFactory(doc);
+
+      // TODO: Clone the CustomElementRegistry instead of recreating it every
+      // time?
+      const elements = Object.keys(ELEMENTS_MAP);
+      for (const element of elements) {
+        bootstrapCustomElement((doc as any).__ce__,
+          element, ELEMENTS_MAP[element], rendererFactory);
+      }
 
       // Render the app component.
       renderComponent(AppComponent, { rendererFactory });
 
-      callback(null, doc.documentElement.outerHTML);
+      // Render in the next tick after all microtasks have been flushed.
+      // This is needed to make sure all the custom elements have been rendered.
+      setTimeout(() => callback(null, doc.documentElement.outerHTML), 0);
     } catch (e) {
       callback(e);
     }

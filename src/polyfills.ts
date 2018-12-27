@@ -72,8 +72,11 @@
 /***************************************************************************************************
  * Zone JS is required by default for Angular itself.
  */
-import 'zone.js/dist/zone';  // Included with Angular CLI.
+// import 'zone.js/dist/zone';  // Included with Angular CLI.
 
+
+// Shim for making ES5 "classes" work with custom elements.
+import 'document-register-element';
 
 /***************************************************************************************************
  * APPLICATION IMPORTS

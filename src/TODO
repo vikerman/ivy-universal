@@ -1,5 +1,7 @@
+- Add LICENSE
 - Turn on strict flags in tsconfig
 - Why is RElement not assignable to Element and vice versa?
+- Renderer3Factory etc. needs deep imports
 - Maybe Ivy instructions can be instructed not to append child if it found
    that the node returned from the renderer is rehydrated.
 - Need to support projection when using components or elements. Need hook from
@@ -11,3 +13,7 @@
   comment data.
 - Need to handle comment markers in ngDevMode on and off. Currently we assume
   ngDevMode is always off on the server.
+- Change Ivy Element Strategy to restore properties and render with a single
+  renderComponent so that rehydration is possible.
+- Let the IvyStrategy take in optional Renderer3Factory as a parameter so that
+  it can be reused on the server.

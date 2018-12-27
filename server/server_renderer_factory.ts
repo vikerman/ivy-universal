@@ -48,6 +48,7 @@ export function getRendererFactory(doc: Document): RendererFactory3 {
     createRenderer: (hostElement: any, rendererType: any) => {
       // Patch the Domino mutation handler to insert the start comment node
       // whenever the end comment node is inserted.
+      const oldMutationHandler = (doc as any).mutationHandler;
       (doc as any)._setMutationHandler((event: DominoMutationEvent) => {
         const target = event.target;
         const node = event.node!;
@@ -57,6 +58,9 @@ export function getRendererFactory(doc: Document): RendererFactory3 {
               target.insertBefore((node as any)[START_COMMENT], node);
             }
             break;
+        }
+        if (oldMutationHandler) {
+          oldMutationHandler(event);
         }
       });
 
