@@ -1,5 +1,7 @@
 import { Component, Input, NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
+import { NgIfModule } from '../lib/modules/ngif.module';
+import { NgForModule } from '../lib/modules/ngfor.module';
 
 @Component({
   selector: 'link-header',
@@ -28,7 +30,7 @@ export class LinkHeader {
   declarations: [
     LinkHeader,
   ],
-  imports: [CommonModule],
+  imports: [NgIfModule, NgForModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class LinkHeaderModule {}
