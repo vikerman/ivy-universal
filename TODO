@@ -1,5 +1,8 @@
+GENERAL:
 - Add LICENSE
 - Turn on strict flags in tsconfig
+
+IVY:
 - Why is RElement not assignable to Element and vice versa?
 - Renderer3Factory etc. needs deep imports
 - Maybe Ivy instructions can be instructed not to append child if it found
@@ -11,9 +14,16 @@
   current view creation. We need some way in Ivy to differentiate between a
   ng-container and other kinds of embedded templates - Maybe usign a different
   comment data.
-- Need to handle comment markers in ngDevMode on and off. Currently we assume
-  ngDevMode is always off on the server.
+- Language Service is borked with Ivy directive references (Can't recognize
+  *ngIf and *ngFor).
+
+ANGULAR ELEMENTS:
 - Change Ivy Element Strategy to restore properties and render with a single
   renderComponent so that rehydration is possible.
 - Let the IvyStrategy take in optional Renderer3Factory as a parameter so that
   it can be reused on the server.
+- Angular Elements pulls in ComponentNgElementStrategyFactory by default. Should
+  not be needed for Ivy elements and save some bytes. Currently Angular Elements
+  is 20 KB. Could be smaller.
+- Need a way to statically check lazy Elements usage(currently turned off) - 
+  whether the custom element name and properties are valid.
