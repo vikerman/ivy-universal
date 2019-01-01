@@ -14,6 +14,7 @@ IVY:
   current view creation. We need some way in Ivy to differentiate between a
   ng-container and other kinds of embedded templates - Maybe usign a different
   comment data.
+- Recover from Rehydration mismatch.
 - Language Service is borked with Ivy directive references (Can't recognize
   *ngIf and *ngFor).
 
@@ -27,6 +28,5 @@ ANGULAR ELEMENTS:
   is 20 KB. Could be smaller.
 - Need a way to statically check lazy Elements usage(currently turned off) - 
   whether the custom element name and properties are valid.
-- Difference from Angular Elements - Reflect attribute to property only for
-  initial attributes(just to keep things simple). Attributes on Elements exist
-  only as a mechanism to transfer state from server to client.
+- Changed the base createCustomElement to let the strategy differentiate between
+  attribute and propery changes(via an extra parameter to setInputValue).

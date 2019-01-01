@@ -1,8 +1,5 @@
 import * as fs from 'fs';
 
-// tslint:disable-next-line:no-any
-(global as any).__domino_frozen__ = false;
-
 // TODO : Replace with actual domino once https://github.com/fgnass/domino/pull/138
 // is merged.
 import * as domino from 'ivy-domino';
@@ -30,7 +27,16 @@ const PORT = process.env.PORT || 4000;
 const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
-const { AppComponent, ELEMENTS_MAP, bootstrapCustomElement } = require('../dist/server/main');
+const { AppComponent, ELEMENTS_MAP, registerCustomElement } = require('../dist/server/main');
+
+// Patch addEventListener to setup jsaction attributes.
+// function patchedAddEventListener(type, listener, options) {
+//   const el: Element = this;
+//   el.setAttribute('jsaction', 'j1');
+//   oldEventListener.call(this, type, listener, options);
+// };
+// const oldEventListener = Node.prototype.addEventListener;
+// Node.prototype.addEventListener = patchedAddEventListener;
 
 // Universal express-engine.
 app.engine('html',
@@ -40,14 +46,18 @@ app.engine('html',
     try {
       const doc: Document = domino.createDocument(getDocument(filePath));
       patchDocument(doc);
+      (doc as any).__elements_map__ = ELEMENTS_MAP;
       const rendererFactory = getRendererFactory(doc);
 
       // TODO: Clone the CustomElementRegistry instead of recreating it every
       // time?
       const elements = Object.keys(ELEMENTS_MAP);
       for (const element of elements) {
-        bootstrapCustomElement((doc as any).__ce__,
-          element, ELEMENTS_MAP[element], rendererFactory);
+        registerCustomElement(
+          (doc as any).__ce__,
+          element, ELEMENTS_MAP[element],
+          rendererFactory
+        );
       }
 
       // Render the app component.
@@ -55,7 +65,9 @@ app.engine('html',
 
       // Render in the next tick after all microtasks have been flushed.
       // This is needed to make sure all the custom elements have been rendered.
-      setTimeout(() => callback(null, doc.documentElement.outerHTML), 0);
+      setTimeout(() => {
+        callback(null, doc.documentElement.outerHTML);
+      }, 0);
     } catch (e) {
       callback(e);
     }

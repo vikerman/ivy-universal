@@ -1,4 +1,3 @@
-import { NgElementStrategy, NgElementStrategyEvent, NgElementStrategyFactory } from '@angular/elements';
 import {
   EventEmitter,
   Injector,
@@ -7,39 +6,78 @@ import {
   ɵrenderComponent as renderComponent,
   ɵComponentType as ComponentType,
 } from '@angular/core';
-import { merge, Observable } from 'rxjs';
+import { merge, Observable, Observer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ComponentDef } from '@angular/core/src/render3';
 import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer';
+
+import { NgElementStrategy, NgElementStrategyEvent, NgElementStrategyFactory } from './element-strategy';
+import { camelToDashCase } from './utils';
+import { isNode } from '../utils/utils';
 
 /** Time in milliseconds to wait before destroying the component ref when disconnected. */
 const DESTROY_DELAY = 10;
 
 export class IvyNgElementStrategyFactory<T> implements NgElementStrategyFactory {
 
-  constructor(private componentType: ComponentType<T>, private rendererFactory?: RendererFactory3) { }
+  constructor(private componentType: ComponentType<T> | string,
+    private rendererFactory?: RendererFactory3,
+    private moduleLoader?: (module: string) => Promise<any>
+  ) { }
 
   create(injector: Injector): NgElementStrategy {
-    return new IvyNgElementStrategy(this.componentType, this.rendererFactory);
+    return new LazyIvyNgElementStrategy(this.componentType, 
+      this.rendererFactory, this.moduleLoader);
   }
 }
 
-export class IvyNgElementStrategy<T> implements NgElementStrategy {
+/**
+ * An Ivy Element that lazily bootstraps when one of the following events occur
+ * 1) If ComponentType(non-string) is passed into the constructor (ELSE) 
+ * 2) If Element is not server-side rendered then load when IntersectionObserver
+ *    goes off (ELSE)
+ * 3) If Element is SSR-ed:
+ *   a) If an event handler inside the Element goes off (ELSE)
+ *   b) If the input properties to the Element changes
+ */
+export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
+  /* Whether the Custom Element loads the component in a lazy manner */
+  private isLazy: boolean;
+
+  /* Whether the Custom Element is connected to an element */
+  private isConnected = false;
+
   /** Merged stream of the component's output events. */
   // TODO(issue/24571): remove '!'.
   events: Observable<NgElementStrategyEvent>;
+
+  /** The observer object for outputs for lazy Elements */
+  private observer: Observer<NgElementStrategyEvent> | null = null;
 
   /** Reference to the component that was created on connect. */
   // TODO(issue/24571): remove '!'.
   private component !: T | null;
 
+  /** Store backing Element for lazy initialization later */
+  private element: HTMLElement;
+
+  /* Whether the backing component is being lazily loaded */
+  private loading = false;
+
   /** Reference number returned by setTimeout when scheduling to destroy. */
   private destroyTimeoutRef: number | null = null;
 
-  /** Initial input values that were set before the component was created. */
-  private readonly initialInputValues = new Map<string, any>();
+  /** Initial properties that were set before the element connected. */
+  private readonly initialProperties = new Map<string, any>();
 
-  constructor(private componentType: ComponentType<T>, private rendererFactory?: RendererFactory3) { }
+  /** Properties that were set after the element connected. */
+  private newProperties: Map<string, any> | null = null;
+
+  constructor(private componentType: ComponentType<T> | string,
+    private rendererFactory?: RendererFactory3,
+    private moduleLoader?: (module: string) => Promise<any>) {
+      this.isLazy = typeof this.componentType === 'string'; 
+    }
 
   /**
    * Initializes a new component if one has not yet been created and cancels any scheduled
@@ -52,8 +90,34 @@ export class IvyNgElementStrategy<T> implements NgElementStrategy {
       return;
     }
 
-    if (!this.component) {
-      this.initializeComponent(element);
+    this.isConnected = true;
+    this.element = element;
+
+    // Eagerly initialize component if ComponentType is immediately available.
+    if (!this.isLazy) {
+      if (!this.component) {
+        // Reflect initial properties to attributes on the server so that
+        // the component can be rehydrated in the same state on the client.
+        // It is assumed the Input properties are not changed from within
+        // the component.
+        if (isNode()) {
+          const propNames = Object.keys(
+            (this.componentType as ComponentType<T>).ngComponentDef['inputs']);
+          for (const propName of propNames) {
+            const templateName = this.getTemplateNameFromPropertyName(propName);
+            const attributeName = camelToDashCase(templateName);
+            const jsonValue =
+              JSON.stringify(element[propName]).replace(/\"/g, '\'');
+            element.setAttribute(attributeName, jsonValue);
+          }
+        }
+        this.initializeComponent(element,
+          this.componentType as ComponentType<T>);
+      }
+    } else {
+      // Dummy initialize the events till the actual output streams are
+      // available after loading the component lazily.
+      this.events = Observable.create(observer => { this.observer = observer;});
     }
   }
 
@@ -69,44 +133,115 @@ export class IvyNgElementStrategy<T> implements NgElementStrategy {
     this.scheduleDestroy();
   }
 
+  private getTemplateNameFromPropertyName(prop: string): string {
+    // assert: this.component != null
+    return (this.componentType as ComponentType<T>)
+      .ngComponentDef['inputs'][prop];
+  }
+
   /**
    * Returns the component property value.
    */
   getInputValue(propName: string): any {
     if (!this.component) {
-      return this.initialInputValues.get(propName);
+      return this.initialProperties.get(propName);
     }
-
-    return this.component[propName];
+    const templateName = this.getTemplateNameFromPropertyName(propName);
+    return this.component[templateName];
   }
 
   /**
    * Sets the input value for the property.
    */
-  setInputValue(propName: string, value: string): void {
-    if (strictEquals(value, this.getInputValue(propName))) {
+  setInputValue(propName: string, value: string, attributeChanged: boolean): void {
+    if (attributeChanged) {
+      if (!this.isConnected) {
+        // Reflect initial attribute value to initial properties. This is done
+        // only for initial attribute values and not for subsequent changes.
+        // (This is different from default Angular Elements behavior)
+        const parsedValue = JSON.parse(value.replace(/\'/g, '"'));
+        this.initialProperties.set(propName, parsedValue);
+      }
       return;
     }
 
-    // If the component has not yet been connected, store the input values in order to
-    // initialize them onto the component after connected.
-    if (!this.component) {
-      this.initialInputValues.set(propName, value);
+    const originalValue = this.getInputValue(propName);
+    if (strictEquals(value, originalValue)) {
       return;
     }
 
-    this.component[propName] = value;
-    markDirty(this.component);
+    if (!this.isLazy) {
+      if (!this.isConnected) {
+        // These are properties that have been set on the element before it
+        // was connected to the DOM.
+        this.initialProperties.set(propName, value);
+      } else {
+        // Component is up and running. Set the `templateName` on the underlying
+        // component.
+        const templateName = this.getTemplateNameFromPropertyName(propName);
+        this.component[templateName] = value;
+        markDirty(this.component);
+      }
+      return;
+    }
+
+    // For a lazy component
+    // For properties set before the connection, just store them in the initial values
+    // For properties set after connection, actual load the component and do change detection
+    if (!this.isConnected) {
+      this.initialProperties.set(propName, value);
+    } else {
+      // Clone the initial properties and set the new properties.
+      if (!this.newProperties) {
+        this.newProperties = new Map(this.initialProperties);
+      }
+      this.newProperties.set(propName, value);
+
+      // Load the component chunk and initialize it to the new properties.
+      this.loadAndInitializeComponent();
+    }
   }
 
+  private loadAndInitializeComponent(): Promise<void> {
+    if (this.loading) {
+      return;
+    }
+    this.loading = true;
+    const localName = this.componentType as string;
+    const moduleName = localName.startsWith('e-') ?
+      localName.substr(2) : localName;
+    return this.moduleLoader(moduleName).then(module => {
+      if (module.ELEMENT) {
+        this.componentType = module.ELEMENT as ComponentType<T>;
+        this.isLazy = false; // Behave like non-lazy component from now on.
+
+        // Do initial rendering with initial properties so that hydration
+        // can match initial state on the DOM.
+        this.initializeComponent(this.element, this.componentType);
+
+        // Restore new properties and run change detection.
+        for (const propName of Array.from(this.newProperties.keys())) {
+          const templateName = this.getTemplateNameFromPropertyName(propName);
+          this.component[templateName] = this.newProperties.get(propName);  
+        }
+        markDirty(this.component);
+      } else {
+        console.error(`No export 'ELEMENT' in ${this.componentType}`);
+      }
+    }).catch(e => {
+      console.error(`Failed to load ${moduleName}`, e);
+    }).finally(() => {
+      this.loading = false;
+    });
+  }
 
   /**
    * Renders the component on the host element and initializes the inputs and outputs.
    */
-  protected initializeComponent(element: HTMLElement) {
+  protected initializeComponent(element: HTMLElement, componentType: ComponentType<T>) {
     // Do the initial rendering with a single renderComponent call.
     // This is needed not only for efficiency but also for rehydrating properly.
-    this.component = renderComponent(this.componentType, {
+    this.component = renderComponent(componentType, {
       host: element as any,
       hostFeatures: [
         // Initialize the component properties before rendering.
@@ -116,28 +251,39 @@ export class IvyNgElementStrategy<T> implements NgElementStrategy {
       rendererFactory: this.rendererFactory,
     });
 
-    this.initializeOutputs();
+    this.initializeOutputs(componentType);
   }
 
   /** Set any stored initial inputs on the component's properties. */
   protected initializeInputs(element: HTMLElement, component: any, componentDef: ComponentDef<any>): void {
-    const inputs = Object.keys(this.componentType.ngComponentDef['inputs']);
+    const inputs = Object.keys(componentDef['inputs']);
     inputs.forEach(prop => {
-      component[prop] = element[prop];
+      const templateName = componentDef['inputs'][prop];
+      component[templateName] = isNode() ?
+       element[prop] : // On the server use the properties for initial values.
+       this.initialProperties.get(prop);
     });
+    this.initialProperties.clear();
   }
 
   /** Sets up listeners for the component's outputs so that the events stream emits the events. */
-  protected initializeOutputs(): void {
-    const outputs = Object.keys(this.componentType.ngComponentDef['outputs']);
+  protected initializeOutputs(componentType: ComponentType<T>): void {
+    const outputs = Object.keys(componentType.ngComponentDef['outputs']);
     const eventEmitters = outputs.map(propName => {
-      const templateName = this.componentType.ngComponentDef['outputs'][propName];
+      const templateName = componentType.ngComponentDef['outputs'][propName];
 
       const emitter = this.component[propName] as EventEmitter<any>;
       return emitter.pipe(map((value: any) => ({ name: templateName, value })));
     });
 
-    this.events = merge(...eventEmitters);
+    const events = merge(...eventEmitters);
+    if (this.observer != null) {
+      // Lazy loaded Element.
+      // Hook on to the existing observer.
+      events.subscribe(this.observer);
+    } else {
+      this.events = events;
+    }
   }
 
   private scheduleDestroy() {

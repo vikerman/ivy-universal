@@ -1,9 +1,11 @@
+// This file should be auto-generated.
+
 export {AppComponent} from './app/app.component';
 
-import {LinkHeader} from './elements/link-header';
+import {ELEMENT as ELEMENT1} from './elements/link-header';
 
 export const ELEMENTS_MAP = {
-  'link-header': LinkHeader,
+  'e-link-header': ELEMENT1,
 };
 
-export {bootstrapCustomElement} from './lib/elements/bootstrap';
+export {registerCustomElement} from './lib/elements/register-custom-element';

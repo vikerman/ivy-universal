@@ -29,7 +29,7 @@ class CustomElementsRegistry {
 }
 
 // Should match
-// third_party/javascript/node_modules/domino/v2_0_2/lib/MutationConstants.js
+// domino/lib/MutationConstants.js
 enum MutationType {
   VALUE = 1,  // The value of a Text, Comment or PI node changed
   ATTR = 2,   // A new attribute was added or an attribute value and/or prefix
@@ -71,8 +71,8 @@ function callAttributeChangedCallback(
 }
 
 function upgradeNode(node: HTMLElement) {
-  const customElements: CustomElementsRegistry =
-      (node.ownerDocument as any).__ce__;
+  const doc = (node.ownerDocument as any);
+  const customElements: CustomElementsRegistry = doc.__ce__;
   const localName = node.localName;
   const clss: ElementConstructor|undefined =
       localName != null ? customElements.get(localName) : undefined;
@@ -115,6 +115,14 @@ function upgradeNode(node: HTMLElement) {
 
     // Change the prototype of the node to that of the custom element.
     (Object as any).setPrototypeOf(node, clss.prototype);
+
+    // Call the attributeChanged callback for each attribute that already
+    // exists.
+    const attrs = Array.from(node.attributes);
+    for (const attr of attrs) {
+      callAttributeChangedCallback(
+          clss, node, attr, node.getAttribute(attr.name)!);
+    }
 
     upgraded = true;
   }
