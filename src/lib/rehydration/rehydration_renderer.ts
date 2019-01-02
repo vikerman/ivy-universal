@@ -133,26 +133,26 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
     }
   }
 
-  createElement(tagName: string): RElement {
+  createElement(localName: string): RElement {
     if (this.current
       && this.current.nodeType === Node.ELEMENT_NODE
-      && (this.current as Element).tagName === tagName.toUpperCase()) {
+      && (this.current as Element).localName === localName) {
       return (this.getCurrentNodeAndAdvance() as any as RElement);
     } else {
-      console.warn('Did not find element ', tagName);
-      return document.createElement(tagName);
+      console.warn('Did not find element ', localName);
+      return document.createElement(localName);
     }
   }
 
-  createElementNS(namespace: string, tagName: string): RElement {
+  createElementNS(namespace: string, localName: string): RElement {
     if (this.current
       && this.current.nodeType === Node.ELEMENT_NODE
-      && (this.current as Element).tagName === tagName
+      && (this.current as Element).localName === localName
       && (this.current as Element).namespaceURI === namespace) {
       return (this.getCurrentNodeAndAdvance() as any as RElement);
     } else {
-      console.warn('Did not find element ', tagName, namespace);
-      return document.createElementNS(namespace, tagName) as any as RElement;
+      console.warn('Did not find element ', localName, namespace);
+      return document.createElementNS(namespace, localName) as any as RElement;
     }
   }
 
@@ -187,7 +187,7 @@ function isBuiltInNode(n: Node) {
 
   // If it's an unknown element or known custom element return as not built-in.
   const el: HTMLElement = n as HTMLElement;
-  if (el.tagName.indexOf('-') > 0 ||
+  if (el.localName.indexOf('-') > 0 ||
     el.constructor === HTMLUnknownElement ||
     customElements.get(el.localName) != null) {
     return false;
