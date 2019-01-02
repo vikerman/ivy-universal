@@ -46,6 +46,7 @@ const createServerRenderer = (doc: Document): ObjectOrientedRenderer3 => {
 export function getRendererFactory(doc: Document): RendererFactory3 {
   return {
     createRenderer: (hostElement: any, rendererType: any) => {
+      (doc as any).__current_element__ = hostElement;
       // Patch the Domino mutation handler to insert the start comment node
       // whenever the end comment node is inserted.
       const oldMutationHandler = (doc as any).mutationHandler;

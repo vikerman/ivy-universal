@@ -14,6 +14,7 @@ import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer'
 import { NgElementStrategy, NgElementStrategyEvent, NgElementStrategyFactory } from './element-strategy';
 import { camelToDashCase } from './utils';
 import { isNode } from '../utils/utils';
+import { EventContract } from '../tsaction/event_contract';
 
 /** Time in milliseconds to wait before destroying the component ref when disconnected. */
 const DESTROY_DELAY = 10;
@@ -22,12 +23,13 @@ export class IvyNgElementStrategyFactory<T> implements NgElementStrategyFactory 
 
   constructor(private componentType: ComponentType<T> | string,
     private rendererFactory?: RendererFactory3,
-    private moduleLoader?: (module: string) => Promise<any>
+    private moduleLoader?: (module: string) => Promise<any>,
+    private contract?: EventContract
   ) { }
 
   create(injector: Injector): NgElementStrategy {
     return new LazyIvyNgElementStrategy(this.componentType, 
-      this.rendererFactory, this.moduleLoader);
+      this.rendererFactory, this.moduleLoader, this.contract);
   }
 }
 
@@ -75,7 +77,8 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
 
   constructor(private componentType: ComponentType<T> | string,
     private rendererFactory?: RendererFactory3,
-    private moduleLoader?: (module: string) => Promise<any>) {
+    private moduleLoader?: (module: string) => Promise<any>,
+    private contract?: EventContract) {
       this.isLazy = typeof this.componentType === 'string'; 
     }
 
@@ -118,6 +121,11 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
       // Dummy initialize the events till the actual output streams are
       // available after loading the component lazily.
       this.events = Observable.create(observer => { this.observer = observer;});
+
+      if (this.initialProperties.get('_boot') != null) {
+        // There are buffered events. Let's go!
+        this.loadAndInitializeComponent();
+      }
     }
   }
 
@@ -159,8 +167,14 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
         // Reflect initial attribute value to initial properties. This is done
         // only for initial attribute values and not for subsequent changes.
         // (This is different from default Angular Elements behavior)
-        const parsedValue = JSON.parse(value.replace(/\'/g, '"'));
+        let parsedValue = value;
+        if (value) {
+          parsedValue = JSON.parse(value.replace(/\'/g, '"'));
+        }
         this.initialProperties.set(propName, parsedValue);
+      } else if (propName === '_boot') {
+        // The event buffering system asked us to boot up!
+        this.loadAndInitializeComponent();
       }
       return;
     }
@@ -219,12 +233,32 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
         // can match initial state on the DOM.
         this.initializeComponent(this.element, this.componentType);
 
-        // Restore new properties and run change detection.
-        for (const propName of Array.from(this.newProperties.keys())) {
-          const templateName = this.getTemplateNameFromPropertyName(propName);
-          this.component[templateName] = this.newProperties.get(propName);  
+        // Signal to the event contract that this host Element is now booted
+        // and to stop buffering events.
+        if (this.contract) {
+          this.contract.boot(this.element);
         }
-        markDirty(this.component);
+
+        // Restore new properties if any and run change detection.
+        let changed = false;
+        if (this.newProperties && this.newProperties.size > 0) {
+          for (const propName of Array.from(this.newProperties.keys())) {
+            const templateName = this.getTemplateNameFromPropertyName(propName);
+            this.component[templateName] = this.newProperties.get(propName);  
+          }
+          changed = true;
+        }
+
+        // Replay buffered events.
+        // TODO : what's the right order of restoring new properties and
+        // replaying events?
+        if (this.contract) {
+          this.contract.replay(this.element);
+        }
+
+        if (changed) {
+          markDirty(this.component);
+        }
       } else {
         console.error(`No export 'ELEMENT' in ${this.componentType}`);
       }

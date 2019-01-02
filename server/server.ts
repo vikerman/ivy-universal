@@ -30,13 +30,23 @@ const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
 const { AppComponent, ELEMENTS_MAP, registerCustomElement } = require('../dist/server/main');
 
 // Patch addEventListener to setup jsaction attributes.
-// function patchedAddEventListener(type, listener, options) {
-//   const el: Element = this;
-//   el.setAttribute('jsaction', 'j1');
-//   oldEventListener.call(this, type, listener, options);
-// };
-// const oldEventListener = Node.prototype.addEventListener;
-// Node.prototype.addEventListener = patchedAddEventListener;
+let actionIndex = 0;
+function patchedAddEventListener(type, listener, options) {
+  const el: Element = this;
+  const doc: any = el.ownerDocument;
+  // Get the currently rendererd custom element tag name.
+  const localName = doc.__current_element__.localName;
+  type = type === 'click' ? '' : `${type}:`;
+
+  // Add a jsaction with hint on which Custom Element handles the event.
+  // TODO: Probably need to look for corner cases around self nested components
+  // with content projection.
+  el.setAttribute('tsaction', `${type}${localName}.${actionIndex++}`);
+
+  oldEventListener.call(this, type, listener, options);
+};
+const oldEventListener = Node.prototype.addEventListener;
+Node.prototype.addEventListener = patchedAddEventListener;
 
 // Universal express-engine.
 app.engine('html',

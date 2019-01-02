@@ -1,15 +1,21 @@
-import { AppComponent } from './app/app.component';
+// EVERYTHING HERE SHOULD BE AUTO-GENERATED.
 
-import { ɵrenderComponent as renderComponent } from '@angular/core';
 import { patchAppendChildAndInsertBefore, RehydrationRendererFactory } from './lib/rehydration/rehydration_renderer';
 import { registerCustomElement } from './lib/elements/register-custom-element';
+import { EventContract } from './lib/tsaction/event_contract';
+
+// TODO : Move this even earlier so that chances of missing DOM events are
+// zero/low.
+const contract = new EventContract(document.documentElement,[
+  'click',
+]);
+contract.listen();
 
 // Patch appendChild and insertBefore so that when an existing rehydrated
 // node is appended to it's parent - Just ignore the operation.
 // In the future instead of patching we should have a way to signal to Ivy that
 // a node is rehydrated and it shouldn't try to append/insert it.
 patchAppendChildAndInsertBefore();
-// renderComponent(AppComponent, {rendererFactory: RehydrationRendererFactory});
 
 // Webpack provides a concise way([request]) to define named chunks without 
 // making this section big and letting us to use predictable names while
@@ -29,10 +35,9 @@ function loadModule(module: string) {
  * on the client that lazily bootstrap the actual component.
  */
 function registerCustomElements(elementsMetadata: any[]) {
-  for (let i = 0; i < elementsMetadata.length - 2;) {
+  for (let i = 0; i < elementsMetadata.length - 1;) {
     const localName: string = elementsMetadata[i++];
     const inputsArray: string[] = elementsMetadata[i++];
-    const ssr: boolean = elementsMetadata[i++];
 
     const inputs = {};
     for (let j = 0; j < inputsArray.length - 1;) {
@@ -41,19 +46,17 @@ function registerCustomElements(elementsMetadata: any[]) {
       inputs[propName] = templateName;
     }
 
+    // Create a dummy ComponentType with only the `inputs` metadata.
     const componentType = {} as any;
-    componentType.ngComponentDef = {
-      inputs
-    };
+    componentType.ngComponentDef = {inputs};
 
     registerCustomElement(customElements, localName, componentType,
-      RehydrationRendererFactory, loadModule);
+      RehydrationRendererFactory, loadModule, contract);
   }
 }
 
-// EVERYTHING BELOW HERE WILL BE AUTO-GENERATED.
 const ELEMENTS_METADATA = [
-  'e-link-header', ['name', 'nameInternal'], true
+  'e-link-header', ['name', 'nameInternal']
 ];
 
 registerCustomElements(ELEMENTS_METADATA);

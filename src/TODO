@@ -30,3 +30,5 @@ ANGULAR ELEMENTS:
   whether the custom element name and properties are valid.
 - Changed the base createCustomElement to let the strategy differentiate between
   attribute and propery changes(via an extra parameter to setInputValue).
+- Added a custom '_boot' to all Ivy Elements to allow for the event buffering
+  system to signal there is a pending event on the element. 

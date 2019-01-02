@@ -1,4 +1,4 @@
-import { Component, Input, NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, Input, NgModule, CUSTOM_ELEMENTS_SCHEMA, ɵmarkDirty as markDirty } from '@angular/core';
 
 import { NgIfModule } from '../lib/modules/ngif.module';
 import { NgForModule } from '../lib/modules/ngfor.module';
@@ -22,7 +22,7 @@ class LinkHeader {
   strings = ['Ivy', 'is', 'good'];
 
   onClick() {
-    alert('cliked!');
+    alert('clicked!');
   }
 }
 

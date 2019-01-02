@@ -137,9 +137,15 @@ export function createCustomElement<P>(
   const attributeToPropertyInputs = getDefaultAttributeToPropertyInputs(inputs);
 
   class NgElementImpl extends NgElement {
-    // Work around a bug in closure typed optimizations(b/79557487) where it is not honoring static
-    // field externs. So using quoted access to explicitly prevent renaming.
-    static readonly['observedAttributes'] = Object.keys(attributeToPropertyInputs);
+    // Work around a bug in closure typed optimizations where it is not honoring
+    // static field externs. So using quoted access to explicitly prevent
+    // renaming.
+
+    // Add `_boot` as a special attribute for all Ivy Elements. The event
+    // buffering system sets this to indicate that it's time to load the
+    // component backing the Element.
+    static readonly['observedAttributes'] = 
+      ['_boot'].concat(Object.keys(attributeToPropertyInputs));
 
     constructor(injector?: Injector) {
       super();
@@ -157,7 +163,7 @@ export function createCustomElement<P>(
         this.ngElementStrategy = strategyFactory.create(config.injector);
       }
 
-      const propName = attributeToPropertyInputs[attrName] !;
+      const propName = attributeToPropertyInputs[attrName] || attrName;
       this.ngElementStrategy.setInputValue(propName, newValue, true);
     }
 
