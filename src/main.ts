@@ -27,7 +27,7 @@ function loadElement(module: string) {
   return import(
     /* webpackInclude: /\.ts$/ */
     /* webpackExclude: /\.spec.ts$/ */
-    /* webpackChunkName: "e-[request]" */
+    /* webpackChunkName: "async-[request]" */
     `./elements/${module}`
   );
 }
@@ -36,7 +36,7 @@ function loadElement(module: string) {
 //   return import(
 //     /* webpackInclude: /\.ts$/ */
 //     /* webpackExclude: /\.spec.ts$/ */
-//     /* webpackChunkName: "page-[request]" */
+//     /* webpackChunkName: "async-page-[request]" */
 //     `./pages/${module}`
 //   );
 // }
@@ -68,9 +68,9 @@ function registerLazyCustomElements(elementsMetadata: any[]) {
 
 // TODO: How to generate this statically when property renaming is in effect?
 const ELEMENTS_METADATA = [
-  'e-link-header', ['name', 'nameInternal'],
-  'e-greeting', ['name', 'name'],
+  'async-link-header', ['name', 'nameInternal'],
+  'async-greeting', ['name', 'name'],
 ];
 
-// Load the shell custom elements whih lazily loads the underlying component.
+// Load the shell custom elements which lazily loads the underlying component.
 registerLazyCustomElements(ELEMENTS_METADATA);

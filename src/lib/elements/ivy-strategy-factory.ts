@@ -230,8 +230,8 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
     }
     this.loading = true;
     const localName = this.componentType as string;
-    const moduleName = localName.startsWith('e-') ?
-      localName.substr(2) : localName;
+    const moduleName = localName.startsWith('async-') ?
+      localName.substr(6) : localName;
     return this.moduleLoader(moduleName).then(module => {
       if (module.ELEMENT) {
         this.componentType = module.ELEMENT as ComponentType<T>;

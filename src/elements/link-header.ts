@@ -13,7 +13,7 @@ import { NgForModule } from '../lib/modules/ngfor.module';
     </div>
   </div>
   {{showGreeting}}
-  <e-greeting *ngIf="showGreeting" [name]="nameInternal"></e-greeting>
+  <async-greeting *ngIf="showGreeting" [name]="nameInternal"></async-greeting>
   `,
 })
 class LinkHeader {
@@ -24,10 +24,13 @@ class LinkHeader {
   showGreeting = true;
 
   strings = ['Ivy', 'is', 'good'];
+  count = 0;
 
   onClick() {
     this.strings.push('!!!');
-    this.showGreeting = !this.showGreeting;
+    if (this.count++ > 2) {
+      this.showGreeting = !this.showGreeting;
+    }
   }
 }
 
