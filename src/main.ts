@@ -23,10 +23,21 @@ patchAppendChildAndInsertBefore();
 // must be a single table somewhere to lookup the chunk names. Need to make sure
 // that can scale well for 100s of components without bloating
 // runtime.js/main.js.
-function loadModule(module: string) {
+function loadElement(module: string) {
   return import(
-    /* webpackChunkName: "[request]" */
+    /* webpackInclude: /\.ts$/ */
+    /* webpackExclude: /\.spec.ts$/ */
+    /* webpackChunkName: "e-[request]" */
     `./elements/${module}`
+  );
+}
+
+function loadPage(module: string) {
+  return import(
+    /* webpackInclude: /\.ts$/ */
+    /* webpackExclude: /\.spec.ts$/ */
+    /* webpackChunkName: "page-[request]" */
+    `./pages/${module}`
   );
 }
 
@@ -34,7 +45,7 @@ function loadModule(module: string) {
  * Parse the Ivy Element metadata and load shell Custom Elements
  * on the client that lazily bootstrap the actual component.
  */
-function registerCustomElements(elementsMetadata: any[]) {
+function registerLazyCustomElements(elementsMetadata: any[]) {
   for (let i = 0; i < elementsMetadata.length - 1;) {
     const localName: string = elementsMetadata[i++];
     const inputsArray: string[] = elementsMetadata[i++];
@@ -51,19 +62,15 @@ function registerCustomElements(elementsMetadata: any[]) {
     componentType.ngComponentDef = {inputs};
 
     registerCustomElement(customElements, localName, componentType,
-      RehydrationRendererFactory, loadModule, contract);
+      RehydrationRendererFactory, loadElement, contract);
   }
 }
 
+// TODO: How to generate this statically when property renaming is in effect?
 const ELEMENTS_METADATA = [
-  'e-link-header', ['name', 'nameInternal']
+  'e-link-header', ['name', 'nameInternal'],
+  'e-greeting', ['name', 'name'],
 ];
 
-registerCustomElements(ELEMENTS_METADATA);
-
-// The following block lets us define named chunks in webpack but should
-// get optimized out in prod mode. So adding 100s of components here shoudln't
-// increase main.js bundle size. This will be auto-generated.
-if (false) {
-  loadModule('link-header');
-}
+// Load the shell custom elements whih lazily loads the underlying component.
+registerLazyCustomElements(ELEMENTS_METADATA);

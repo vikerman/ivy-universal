@@ -4,7 +4,7 @@ import { NgIfModule } from '../lib/modules/ngif.module';
 import { NgForModule } from '../lib/modules/ngfor.module';
 
 @Component({
-  selector: 'link-header', // Should match filename.
+  selector: 'link-header',
   template: `
   <button (click)="onClick()">Press</button>
   <div *ngIf="nameInternal === 'ivy'">
@@ -12,22 +12,27 @@ import { NgForModule } from '../lib/modules/ngfor.module';
       <h3 *ngIf="s.startsWith('I')">Hello</h3>{{s}}
     </div>
   </div>
-  <h2>Hello {{nameInternal}}. Here are some links to help you start: </h2>
+  <e-greeting *ngIf="showGreeting" [name]="nameInternal"></e-greeting>
   `,
 })
 class LinkHeader {
   @Input('name')
   nameInternal: string;
 
+  @Input()
+  showGreeting = false;
+
   strings = ['Ivy', 'is', 'good'];
 
   onClick() {
-    alert('clicked!');
+    this.strings.push('!!!');
+    this.showGreeting = true;
+    markDirty(this);
   }
 }
 
 // Add only non-lazy references here. For lazy reference to other elements
-// just 
+// just directly use them in the template.
 @NgModule({
   declarations: [
     LinkHeader,

@@ -128,7 +128,7 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
       this.current = node;
       return (this.getCurrentNodeAndAdvance() as RComment);
     } else {
-      console.warn('Did not find comment');
+      // console.warn('Did not find comment');
       return document.createComment(data);
     }
   }
@@ -139,7 +139,7 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
       && (this.current as Element).localName === localName) {
       return (this.getCurrentNodeAndAdvance() as any as RElement);
     } else {
-      console.warn('Did not find element ', localName);
+      // console.warn('Did not find element ', localName);
       return document.createElement(localName);
     }
   }
@@ -151,7 +151,7 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
       && (this.current as Element).namespaceURI === namespace) {
       return (this.getCurrentNodeAndAdvance() as any as RElement);
     } else {
-      console.warn('Did not find element ', localName, namespace);
+      // console.warn('Did not find element ', localName, namespace);
       return document.createElementNS(namespace, localName) as any as RElement;
     }
   }
@@ -160,7 +160,7 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
     if (this.current && this.current.nodeType === Node.TEXT_NODE) {
       return (this.getCurrentNodeAndAdvance() as RText);
     } else {
-      console.warn('Did not find text');
+      // console.warn('Did not find text');
       return document.createTextNode(data);
     }
   }

@@ -109,9 +109,11 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
           for (const propName of propNames) {
             const templateName = this.getTemplateNameFromPropertyName(propName);
             const attributeName = camelToDashCase(templateName);
-            const jsonValue =
-              JSON.stringify(element[propName]).replace(/\"/g, '\'');
-            element.setAttribute(attributeName, jsonValue);
+            if (element[propName] != null) {
+              const jsonValue =
+                JSON.stringify(element[propName]).replace(/\"/g, '\'');
+              element.setAttribute(attributeName, jsonValue);
+            }
           }
         }
         this.initializeComponent(element,
@@ -122,8 +124,10 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
       // available after loading the component lazily.
       this.events = Observable.create(observer => { this.observer = observer;});
 
-      if (this.initialProperties.get('_boot') != null) {
-        // There are buffered events. Let's go!
+      if (this.initialProperties.get('_boot') != null || 
+          !this.isServerSideRendered()) {
+        // There are buffered events or just client-side rendered 
+        // component. Let's go!
         this.loadAndInitializeComponent();
       }
     }
@@ -145,6 +149,10 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
     // assert: this.component != null
     return (this.componentType as ComponentType<T>)
       .ngComponentDef['inputs'][prop];
+  }
+
+  private isServerSideRendered() {
+    return this.element.getAttribute('_s') != null;
   }
 
   /**
@@ -202,7 +210,7 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
     // For a lazy component
     // For properties set before the connection, just store them in the initial values
     // For properties set after connection, actual load the component and do change detection
-    if (!this.isConnected) {
+    if (!this.isConnected || !this.isServerSideRendered()) {
       this.initialProperties.set(propName, value);
     } else {
       // Clone the initial properties and set the new properties.
