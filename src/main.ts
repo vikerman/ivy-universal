@@ -32,14 +32,14 @@ function loadElement(module: string) {
   );
 }
 
-function loadPage(module: string) {
-  return import(
-    /* webpackInclude: /\.ts$/ */
-    /* webpackExclude: /\.spec.ts$/ */
-    /* webpackChunkName: "page-[request]" */
-    `./pages/${module}`
-  );
-}
+// function loadPage(module: string) {
+//   return import(
+//     /* webpackInclude: /\.ts$/ */
+//     /* webpackExclude: /\.spec.ts$/ */
+//     /* webpackChunkName: "page-[request]" */
+//     `./pages/${module}`
+//   );
+// }
 
 /**
  * Parse the Ivy Element metadata and load shell Custom Elements
