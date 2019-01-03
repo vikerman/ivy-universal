@@ -12,6 +12,7 @@ import { NgForModule } from '../lib/modules/ngfor.module';
       <h3 *ngIf="s.startsWith('I')">Hello</h3>{{s}}
     </div>
   </div>
+  {{showGreeting}}
   <e-greeting *ngIf="showGreeting" [name]="nameInternal"></e-greeting>
   `,
 })
@@ -20,13 +21,13 @@ class LinkHeader {
   nameInternal: string;
 
   @Input()
-  showGreeting = false;
+  showGreeting = true;
 
   strings = ['Ivy', 'is', 'good'];
 
   onClick() {
     this.strings.push('!!!');
-    this.showGreeting = true;
+    this.showGreeting = !this.showGreeting;
   }
 }
 

@@ -113,16 +113,11 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
         // Mark the last node as end of the template section.
         nodes[nodes.length - 1][TEMPLATE_END] = true;
 
-        // If we are in a mode where we are processing templates any further
-        // templates will be considered as nested templates and pushed to the
-        // front of the queue.
-        // Else we are still in creation mode and any new templates will be 
-        // pushed at the end of the queue.
-        if (this.templateMode) {
-          this.templateNodes.unshift(nodes[0]);
-        } else {
-          this.templateNodes.push(nodes[0]);
-        }
+        // Push the new nodes at the end of the template nodes.
+        // Embedded templates are visited in breadth first mode.
+        // So all the sibling templates will be expanded before coming back
+        // to this nested template.
+        this.templateNodes.push(nodes[0]);
       }
 
       // Return the end comment as the matching comment.

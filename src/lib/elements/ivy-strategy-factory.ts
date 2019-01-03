@@ -309,9 +309,12 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
     const inputs = Object.keys(componentDef['inputs']);
     inputs.forEach(prop => {
       const templateName = componentDef['inputs'][prop];
-      component[templateName] = isNode() ?
+      const value = isNode() ?
        element[prop] : // On the server use the properties for initial values.
        this.initialProperties.get(prop);
+       if (value !== undefined) {
+        component[templateName] = value;
+       }
     });
     this.initialProperties.clear();
   }
