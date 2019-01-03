@@ -27,7 +27,6 @@ class LinkHeader {
   onClick() {
     this.strings.push('!!!');
     this.showGreeting = true;
-    markDirty(this);
   }
 }
 

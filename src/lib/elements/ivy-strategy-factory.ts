@@ -286,6 +286,10 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
     this.component = renderComponent(componentType, {
       host: element as any,
       hostFeatures: [
+        // Store the component instance in a property on the host element.
+        // This will be used by the nano zones to markDirty on the root
+        // component after an DOM event handler runs.
+        this.storeComponentReference.bind(this, element),
         // Initialize the component properties before rendering.
         this.initializeInputs.bind(this, element),
         LifecycleHooksFeature,
@@ -294,6 +298,10 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
     });
 
     this.initializeOutputs(componentType);
+  }
+
+  private storeComponentReference(element: HTMLElement, component: any, componentDef: ComponentDef<any>): void {
+    element['_component'] = component;
   }
 
   /** Set any stored initial inputs on the component's properties. */

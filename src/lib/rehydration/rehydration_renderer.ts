@@ -1,3 +1,4 @@
+import { ɵmarkDirty as markDirty } from '@angular/core';
 import { ObjectOrientedRenderer3, RElement, RComment, RText, RendererFactory3, Renderer3 } from '@angular/core/src/render3/interfaces/renderer';
 
 const REHYDRATED = '__REHYDRATED__';
@@ -134,14 +135,33 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
   }
 
   createElement(localName: string): RElement {
+    let el: Element;
     if (this.current
       && this.current.nodeType === Node.ELEMENT_NODE
       && (this.current as Element).localName === localName) {
-      return (this.getCurrentNodeAndAdvance() as any as RElement);
+      el = this.getCurrentNodeAndAdvance() as Element;
     } else {
       // console.warn('Did not find element ', localName);
-      return document.createElement(localName);
+      el = document.createElement(localName);
     }
+    // Nano Zones implementation.
+    // Patch addEventListener to automatically mark the host component as
+    // dirty when any DOM event handler executes.
+    const oldEventListener = el.addEventListener;
+    const host = this.host;
+    el.addEventListener = (type: string, callback: EventListener, options?: any) => {
+      oldEventListener.call(el, type, (evt: Event) => {
+        try {
+          callback(evt);
+        } finally {
+          const component = (host as any)['_component'];
+          if (component) {
+            markDirty(component);
+          }
+        }
+      }, options);
+    }
+    return el as any;
   }
 
   createElementNS(namespace: string, localName: string): RElement {
