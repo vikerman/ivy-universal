@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 4000;
 const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
-const { AppComponent, ELEMENTS_MAP, registerCustomElement } = require('../dist/server/main');
+const { ROOT_COMPONENT, ELEMENTS_MAP, registerCustomElement } = require('../dist/server/main');
 
 // Patch addEventListener to setup jsaction attributes.
 let actionIndex = 0;
@@ -70,8 +70,10 @@ app.engine('html',
         );
       }
 
-      // Render the app component.
-      renderComponent(AppComponent, { rendererFactory });
+      // Add the shell component. This will trigger the rendring of the
+      // app starting from the shell.
+      const shell = doc.createElement('async-shell');
+      doc.body.appendChild(shell);
 
       // Render in the next tick after all microtasks have been flushed.
       // This is needed to make sure all the custom elements have been rendered.

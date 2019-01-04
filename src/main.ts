@@ -32,6 +32,13 @@ function loadElement(module: string) {
   );
 }
 
+function loadShell() {
+  return import(
+    /* webpackChunkName: "async-shell" */
+    `./shell/shell`
+  );
+}
+
 // function loadPage(module: string) {
 //   return import(
 //     /* webpackInclude: /\.ts$/ */
@@ -61,13 +68,20 @@ function registerLazyCustomElements(elementsMetadata: any[]) {
     const componentType = {} as any;
     componentType.ngComponentDef = {inputs};
 
+    // The Shell is loaded from the shell folder. So using a different
+    // loader function for that.
+    let loader = loadElement;
+    if (localName === 'async-shell') {
+      loader = loadShell;
+    }
     registerCustomElement(customElements, localName, componentType,
-      RehydrationRendererFactory, loadElement, contract);
+      RehydrationRendererFactory, loader, contract);
   }
 }
 
 // TODO: How to generate this statically when property renaming is in effect?
 const ELEMENTS_METADATA = [
+  'async-shell', [],
   'async-link-header', ['name', 'nameInternal'],
   'async-greeting', ['name', 'name'],
 ];

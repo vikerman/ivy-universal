@@ -6,7 +6,7 @@ import { Component, Input, NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/cor
   <h2>Hello {{name}}. Here are some links to help you start: </h2>
   `,
 })
-class Greeting {
+export class Greeting {
   @Input()
   name: string;
 }
@@ -16,6 +16,7 @@ class Greeting {
   declarations: [
     Greeting,
   ],
+  exports: [Greeting],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class GreetingModule { }

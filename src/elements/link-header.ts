@@ -16,7 +16,7 @@ import { NgForModule } from '../lib/modules/ngfor.module';
   <async-greeting *ngIf="showGreeting" [name]="nameInternal"></async-greeting>
   `,
 })
-class LinkHeader {
+export class LinkHeader {
   @Input('name')
   nameInternal: string;
 
@@ -40,6 +40,7 @@ class LinkHeader {
   declarations: [
     LinkHeader,
   ],
+  exports: [LinkHeader],
   imports: [NgIfModule, NgForModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

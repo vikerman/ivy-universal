@@ -1,3 +1,8 @@
+import { Component, Input, NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+
+@Component({
+  selector: 'shell',
+  template: `
 <!--The content below is only a placeholder and can be replaced.-->
 <div style="text-align:center">
   <h1>
@@ -16,4 +21,24 @@
   <li>
     <h2><a target="_blank" rel="noopener" href="https://blog.angular.io/">Angular blog</a></h2>
   </li>
-</ul>
+</ul>  
+  `,
+})
+export class ShellComponent {
+  title = 'ivy';
+}
+
+// Add only non-lazy references here.
+@NgModule({
+  declarations: [
+    ShellComponent,
+  ],
+  exports: [ShellComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+})
+export class ShellComponentModule { }
+
+// DO NOT EDIT BELOW THIS LINE
+// This provides a stable export name without having to resort to default
+// exports.  
+export const SHELL = ShellComponent; 
