@@ -3,6 +3,7 @@
 import {SHELL} from './shell/shell';
 import {ELEMENT as ELEMENT1} from './elements/link-header';
 import {ELEMENT as ELEMENT2} from './elements/greeting';
+import * as _ngBits from './lib/elements/angular-ivy-bits';
 
 export const ELEMENTS_MAP = {
   'async-shell': SHELL,
@@ -11,3 +12,4 @@ export const ELEMENTS_MAP = {
 };
 
 export {registerCustomElement} from './lib/elements/register-custom-element';
+export const NG_BITS = _ngBits;

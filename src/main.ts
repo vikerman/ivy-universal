@@ -1,12 +1,12 @@
 // EVERYTHING HERE SHOULD BE AUTO-GENERATED.
 
-import { patchAppendChildAndInsertBefore, RehydrationRendererFactory } from './lib/rehydration/rehydration_renderer';
+import { patchAppendChildAndInsertBefore } from './lib/utils/patch-append-insert';
 import { registerCustomElement } from './lib/elements/register-custom-element';
 import { EventContract } from './lib/tsaction/event_contract';
 
 // TODO : Move this even earlier so that chances of missing DOM events are
 // zero/low.
-const contract = new EventContract(document.documentElement,[
+const contract = new EventContract(document.documentElement, [
   'click',
 ]);
 contract.listen();
@@ -35,7 +35,7 @@ function loadElement(module: string) {
 function loadShell() {
   return import(
     /* webpackChunkName: "async-shell" */
-    `./shell/shell`
+    './shell/shell'
   );
 }
 
@@ -71,11 +71,17 @@ function registerLazyCustomElements(elementsMetadata: any[]) {
     // The Shell is loaded from the shell folder. So using a different
     // loader function for that.
     let loader = loadElement;
-    if (localName === 'async-shell') {
-      loader = loadShell;
+    switch (localName) {
+      case 'async-shell': loader = loadShell; break;
     }
-    registerCustomElement(customElements, localName, componentType,
-      RehydrationRendererFactory, loader, contract);
+
+    registerCustomElement(customElements,
+      () => import(
+        /* webpackChunkName: "renderer" */
+        './lib/elements/angular-ivy-bits'
+      ),
+      localName, componentType,
+      undefined /* use default rehydration renderer */, loader, contract);
   }
 }
 

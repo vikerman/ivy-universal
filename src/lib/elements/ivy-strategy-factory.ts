@@ -1,13 +1,9 @@
+// assert: Only types should be imported from @angular/core and rxjs.
 import {
-  EventEmitter,
   Injector,
-  ɵLifecycleHooksFeature as LifecycleHooksFeature,
-  ɵmarkDirty as markDirty,
-  ɵrenderComponent as renderComponent,
   ɵComponentType as ComponentType,
 } from '@angular/core';
-import { merge, Observable, Observer } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, Observer, Subscription } from 'rxjs';
 import { ComponentDef } from '@angular/core/src/render3';
 import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer';
 
@@ -19,18 +15,50 @@ import { EventContract } from '../tsaction/event_contract';
 /** Time in milliseconds to wait before destroying the component ref when disconnected. */
 const DESTROY_DELAY = 10;
 
-export class IvyNgElementStrategyFactory<T> implements NgElementStrategyFactory {
+class DummyObserver<T> implements Observer<T> {
+  constructor(private cb: (t: T) => void) {}
+  next(t: T) {
+    this.cb(t);
+  }
+  complete() {}
+  error(err: any) {}
+}
 
-  constructor(private componentType: ComponentType<T> | string,
+class MyObservable<T> {
+  constructor(private cb: (observer: Observer<T>) => void) {}
+  subscribe(o: (t: T) => void) {
+    this.cb(new DummyObserver(o));
+    return {unsubscribe: () => {}};
+  }
+}
+
+export class LazyIvyElementStrategyFactory<T> implements NgElementStrategyFactory {
+
+  constructor(
+    private ngBitsLoader: () => Promise<any>,
+    private componentType: ComponentType<T> | string,
     private rendererFactory?: RendererFactory3,
     private moduleLoader?: (module: string) => Promise<any>,
     private contract?: EventContract
   ) { }
 
   create(injector: Injector): NgElementStrategy {
-    return new LazyIvyNgElementStrategy(this.componentType, 
+    return new LazyIvyElementStrategy(this.ngBitsLoader, this.componentType,
       this.rendererFactory, this.moduleLoader, this.contract);
   }
+}
+
+interface NgBits<T> {
+  render<T>(
+    componentType: ComponentType<T>,
+    element: Element,
+    hostFeatures: Array<(<U>(c: U, cd: ComponentDef<U>) => void)>,
+    rendererFactory?: RendererFactory3): T;
+
+  markDirty(component: T): void;
+
+  initializeOutputs<T, U>(componentType: ComponentType<T>,
+    observer: Observer<U> | null) : Observable<NgElementStrategyEvent> | Subscription;
 }
 
 /**
@@ -42,7 +70,7 @@ export class IvyNgElementStrategyFactory<T> implements NgElementStrategyFactory 
  *   a) If an event handler inside the Element goes off (ELSE)
  *   b) If the input properties to the Element changes
  */
-export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
+export class LazyIvyElementStrategy<T> implements NgElementStrategy {
   /* Whether the Custom Element loads the component in a lazy manner */
   private isLazy: boolean;
 
@@ -55,6 +83,15 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
 
   /** The observer object for outputs for lazy Elements */
   private observer: Observer<NgElementStrategyEvent> | null = null;
+
+  /** Subscription created by lazy initialization of outputs */
+  private subscription: Subscription | null = null;
+
+  /**
+   * Module containing Angular related bits.
+   * Will be loaded lazily in case the Element is loaded lazily.
+   */
+  private ngBits: NgBits<T> | null = null;
 
   /** Reference to the component that was created on connect. */
   // TODO(issue/24571): remove '!'.
@@ -75,7 +112,9 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
   /** Properties that were set after the element connected. */
   private newProperties: Map<string, any> | null = null;
 
-  constructor(private componentType: ComponentType<T> | string,
+  constructor(
+    private ngBitsLoader: () => NgBits<T> | Promise<NgBits<T>>,
+    private componentType: ComponentType<T> | string,
     private rendererFactory?: RendererFactory3,
     private moduleLoader?: (module: string) => Promise<any>,
     private contract?: EventContract) {
@@ -99,6 +138,9 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
     // Eagerly initialize component if ComponentType is immediately available.
     if (!this.isLazy) {
       if (!this.component) {
+        // Non-Lazy mode. Just get the ngBits synchronously.
+        this.ngBits = this.ngBitsLoader() as NgBits<T>;
+
         // Reflect initial properties to attributes on the server so that
         // the component can be rehydrated in the same state on the client.
         // It is assumed the Input properties are not changed from within
@@ -122,7 +164,8 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
     } else {
       // Dummy initialize the events till the actual output streams are
       // available after loading the component lazily.
-      this.events = Observable.create(observer => { this.observer = observer;});
+      this.events = new MyObservable<NgElementStrategyEvent>(
+        observer => {this.observer = observer;}) as any;
 
       if (this.initialProperties.get('_boot') != null || 
           !this.isServerSideRendered()) {
@@ -202,7 +245,9 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
         // component.
         const templateName = this.getTemplateNameFromPropertyName(propName);
         this.component[templateName] = value;
-        markDirty(this.component);
+        if (this.ngBits) {
+          this.ngBits.markDirty(this.component);
+        }
       }
       return;
     }
@@ -232,10 +277,12 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
     const localName = this.componentType as string;
     const moduleName = localName.startsWith('async-') ?
       localName.substr(6) : localName;
-    return this.moduleLoader(moduleName).then(module => {
+    return Promise.all([this.ngBitsLoader(), this.moduleLoader(moduleName)])
+        .then(([ngBits, module]) => {
       if (module.ELEMENT) {
         this.componentType = module.ELEMENT as ComponentType<T>;
         this.isLazy = false; // Behave like non-lazy component from now on.
+        this.ngBits = ngBits; // Store the ngBits reference.
 
         // Do initial rendering with initial properties so that hydration
         // can match initial state on the DOM.
@@ -265,7 +312,7 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
         }
 
         if (changed) {
-          markDirty(this.component);
+          this.ngBits.markDirty(this.component);
         }
       } else {
         console.error(`No export 'ELEMENT' in ${this.componentType}`);
@@ -283,21 +330,25 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
   protected initializeComponent(element: HTMLElement, componentType: ComponentType<T>) {
     // Do the initial rendering with a single renderComponent call.
     // This is needed not only for efficiency but also for rehydrating properly.
-    this.component = renderComponent(componentType, {
-      host: element as any,
-      hostFeatures: [
-        // Store the component instance in a property on the host element.
-        // This will be used by the nano zones to markDirty on the root
-        // component after an DOM event handler runs.
-        this.storeComponentReference.bind(this, element),
-        // Initialize the component properties before rendering.
-        this.initializeInputs.bind(this, element),
-        LifecycleHooksFeature,
-      ],
-      rendererFactory: this.rendererFactory,
-    });
+    this.component = this.ngBits.render(componentType, element,
+        [
+          // Store the component instance in a property on the host element.
+          // This will be used by the nano zones to markDirty on the root
+          // component after an DOM event handler runs.
+          this.storeComponentReference.bind(this, element),
 
-    this.initializeOutputs(componentType);
+          // Initialize the component properties before rendering.
+          this.initializeInputs.bind(this, element),
+        ],
+        this.rendererFactory,
+    );
+
+    const events = this.ngBits.initializeOutputs(componentType, this.observer);
+    if (this.events) {
+      this.subscription = events as Subscription;
+    } else {
+      this.events = events as Observable<NgElementStrategyEvent>;
+    }
   }
 
   private storeComponentReference(element: HTMLElement, component: any, componentDef: ComponentDef<any>): void {
@@ -319,26 +370,6 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
     this.initialProperties.clear();
   }
 
-  /** Sets up listeners for the component's outputs so that the events stream emits the events. */
-  protected initializeOutputs(componentType: ComponentType<T>): void {
-    const outputs = Object.keys(componentType.ngComponentDef['outputs']);
-    const eventEmitters = outputs.map(propName => {
-      const templateName = componentType.ngComponentDef['outputs'][propName];
-
-      const emitter = this.component[propName] as EventEmitter<any>;
-      return emitter.pipe(map((value: any) => ({ name: templateName, value })));
-    });
-
-    const events = merge(...eventEmitters);
-    if (this.observer != null) {
-      // Lazy loaded Element.
-      // Hook on to the existing observer.
-      events.subscribe(this.observer);
-    } else {
-      this.events = events;
-    }
-  }
-
   private scheduleDestroy() {
     this.destroyTimeoutRef = setTimeout(() => {
       if (this.component) {
@@ -347,6 +378,10 @@ export class LazyIvyNgElementStrategy<T> implements NgElementStrategy {
           onDestroy();
         }
         this.component = null;
+      }
+      if (this.subscription) {
+        this.subscription.unsubscribe();
+        this.subscription = null;
       }
     }, DESTROY_DELAY) as any;
   }

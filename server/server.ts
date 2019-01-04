@@ -9,9 +9,6 @@ import * as domino from 'ivy-domino';
 Object.assign(global, (domino as any).impl);
 
 // tslint:enable:no-any
-
-import { ɵrenderComponent as renderComponent } from '@angular/core';
-
 import * as express from 'express';
 import { join } from 'path';
 import { getRendererFactory } from './server_renderer_factory';
@@ -27,7 +24,7 @@ const PORT = process.env.PORT || 4000;
 const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
-const { ROOT_COMPONENT, ELEMENTS_MAP, registerCustomElement } = require('../dist/server/main');
+const { ELEMENTS_MAP, NG_BITS, registerCustomElement } = require('../dist/server/main');
 
 // Patch addEventListener to setup jsaction attributes.
 let actionIndex = 0;
@@ -65,6 +62,7 @@ app.engine('html',
       for (const element of elements) {
         registerCustomElement(
           (doc as any).__ce__,
+          () => NG_BITS,
           element, ELEMENTS_MAP[element],
           rendererFactory
         );
@@ -73,7 +71,7 @@ app.engine('html',
       // Add the shell component. This will trigger the rendring of the
       // app starting from the shell.
       const shell = doc.createElement('async-shell');
-      doc.body.appendChild(shell);
+      doc.body.insertAdjacentElement('afterbegin', shell);
 
       // Render in the next tick after all microtasks have been flushed.
       // This is needed to make sure all the custom elements have been rendered.

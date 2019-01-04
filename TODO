@@ -30,3 +30,5 @@ ANGULAR ELEMENTS:
 - Difference from Angular Elements - Reflect attribute to property only for
   initial attributes(just to keep things simple). Attributes on Elements exist
   only as a mechanism to transfer state from server to client.
+- Using ComponentFactoryResolver in getComponentInputs pulls in a lot/whole of
+  @angular/core.
