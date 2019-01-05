@@ -2,7 +2,6 @@ import { Component, Input, NgModule, CUSTOM_ELEMENTS_SCHEMA, ɵmarkDirty as mark
 
 import { NgIfModule } from '../lib/modules/ngif.module';
 import { NgForModule } from '../lib/modules/ngfor.module';
-import { count } from 'rxjs/operators';
 
 @Component({
   selector: 'link-header',
@@ -30,6 +29,8 @@ export class LinkHeader {
       // lazy load the child element code and re-render.
       this.nameInternal = `ivy${this.count}`;
     }
+    // Tell Ivy that this component state has changed to reevaluate templates.
+    markDirty(this);
   }
 }
 

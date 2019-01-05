@@ -130,33 +130,14 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
   }
 
   createElement(localName: string): RElement {
-    let el: Element;
     if (this.current
       && this.current.nodeType === Node.ELEMENT_NODE
       && (this.current as Element).localName === localName) {
-      el = this.getCurrentNodeAndAdvance() as Element;
+        return (this.getCurrentNodeAndAdvance() as any as RElement);
     } else {
       // console.warn('Did not find element ', localName);
-      el = document.createElement(localName);
+      return document.createElement(localName);
     }
-    // Nano Zones implementation.
-    // Patch addEventListener to automatically mark the host component as
-    // dirty when any DOM event handler executes.
-    const oldEventListener = el.addEventListener;
-    const host = this.host;
-    el.addEventListener = (type: string, callback: EventListener, options?: any) => {
-      oldEventListener.call(el, type, (evt: Event) => {
-        try {
-          callback(evt);
-        } finally {
-          const component = (host as any)['_component'];
-          if (component) {
-            markDirty(component);
-          }
-        }
-      }, options);
-    }
-    return el as any;
   }
 
   createElementNS(namespace: string, localName: string): RElement {
