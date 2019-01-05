@@ -37,8 +37,3 @@ export class ShellComponent {
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ShellComponentModule { }
-
-// DO NOT EDIT BELOW THIS LINE
-// This provides a stable export name without having to resort to default
-// exports.  
-export const SHELL = ShellComponent; 

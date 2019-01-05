@@ -20,8 +20,3 @@ export class Greeting {
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class GreetingModule { }
-
-// DO NOT EDIT BELOW THIS LINE
-// This provides a stable export name without having to resort to default
-// exports.  
-export const ELEMENT = Greeting; 

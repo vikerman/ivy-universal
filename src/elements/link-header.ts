@@ -44,8 +44,3 @@ export class LinkHeader {
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class LinkHeaderModule {}
-
-// DO NOT EDIT BELOW THIS LINE
-// This provides a stable export name without having to resort to default
-// exports.  
-export const ELEMENT = LinkHeader; 
