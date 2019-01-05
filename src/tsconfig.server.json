@@ -4,7 +4,11 @@
     "outDir": "../out-tsc/app-server",
     "baseUrl": "."
   },
+  "exclude": [
+    "test.ts",
+    "**/*.spec.ts"
+  ],
   "angularCompilerOptions": {
     "enableIvy": "ngtsc"
-  }
+  },
 }

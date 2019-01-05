@@ -20,6 +20,7 @@
     "@angular/compiler": "git://github.com/angular/compiler-builds.git#master-ivy-aot",
     "@angular/core": "git://github.com/angular/core-builds.git#master-ivy-aot",
     "@angular/platform-browser": "git://github.com/angular/platform-browser-builds.git#master-ivy-aot",
+    "@angular/platform-browser-dynamic": "git://github.com/angular/platform-browser-dynamic-builds.git#master-ivy-aot",
     "core-js": "^2.5.4",
     "document-register-element": "1.8.1",
     "ivy-domino": "^2.1.2",
