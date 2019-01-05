@@ -279,8 +279,27 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
       localName.substr(6) : localName;
     return Promise.all([this.ngBitsLoader(), this.moduleLoader(moduleName)])
         .then(([ngBits, module]) => {
-      if (module.ELEMENT) {
-        this.componentType = module.ELEMENT as ComponentType<T>;
+
+      // Look for an exported memeber with ngComponentDef.
+      const exports = Object.keys(module);
+      let compType = null;
+      for (const exp of exports) {
+        if (module[exp]['ngComponentDef'] != null) {
+          // Find the component matching the selector.
+          let selectors: string[][] = module[exp]['ngComponentDef'].selectors;
+          for (let sels of selectors) {
+            if (sels[0] === moduleName) {
+              compType = module[exp];
+              break;
+            }
+          }
+        }
+      }
+
+      if (!compType) {
+        console.error(`Did not find exported component in ${moduleName} with selector '${moduleName}'`);
+      } else {
+        this.componentType = compType as ComponentType<T>;
         this.isLazy = false; // Behave like non-lazy component from now on.
         this.ngBits = ngBits; // Store the ngBits reference.
 
@@ -314,8 +333,6 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
         if (changed) {
           this.ngBits.markDirty(this.component);
         }
-      } else {
-        console.error(`No export 'ELEMENT' in ${this.componentType}`);
       }
     }).catch(e => {
       console.error(`Failed to load ${moduleName}`, e);
