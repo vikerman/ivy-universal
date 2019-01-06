@@ -4,6 +4,9 @@ import { patchAppendChildAndInsertBefore } from './lib/utils/patch-append-insert
 import { registerCustomElement } from './lib/elements/register-custom-element';
 import { EventContract } from './lib/tsaction/event_contract';
 
+import { ROUTES } from './routes';
+import { registerRouterElement } from './lib/router/router';
+
 // TODO : Move this even earlier so that chances of missing DOM events are
 // zero/low.
 const contract = new EventContract(document.documentElement, [
@@ -27,26 +30,26 @@ function loadElement(module: string) {
   return import(
     /* webpackInclude: /\.ts$/ */
     /* webpackExclude: /\.spec.ts$/ */
-    /* webpackChunkName: "async-[request]" */
-    `./elements/${module}`
+    /* webpackChunkName: "[request]-cmp" */
+    `./components/${module}`
   );
 }
 
 function loadShell() {
   return import(
-    /* webpackChunkName: "async-shell" */
+    /* webpackChunkName: "shell-root" */
     './shell/shell'
   );
 }
 
-// function loadPage(module: string) {
-//   return import(
-//     /* webpackInclude: /\.ts$/ */
-//     /* webpackExclude: /\.spec.ts$/ */
-//     /* webpackChunkName: "async-page-[request]" */
-//     `./pages/${module}`
-//   );
-// }
+function loadPage(module: string) {
+   return import(
+     /* webpackInclude: /\.ts$/ */
+     /* webpackExclude: /\.spec.ts$/ */
+     /* webpackChunkName: "[request]-page" */
+     `./pages/${module}`
+   );
+}
 
 /**
  * Parse the Ivy Element metadata and load shell Custom Elements
@@ -71,8 +74,10 @@ function registerLazyCustomElements(elementsMetadata: any[]) {
     // The Shell is loaded from the shell folder. So using a different
     // loader function for that.
     let loader = loadElement;
-    switch (localName) {
-      case 'async-shell': loader = loadShell; break;
+    if (localName == 'shell-root') {
+      loader = loadShell;
+    } else if (localName.endsWith('-page')) {
+      loader = loadPage;
     }
 
     registerCustomElement(customElements,
@@ -87,10 +92,16 @@ function registerLazyCustomElements(elementsMetadata: any[]) {
 
 // TODO: How to generate this statically when property renaming is in effect?
 const ELEMENTS_METADATA = [
-  'async-shell', [],
-  'async-link-header', ['name', 'nameInternal'],
-  'async-greeting', ['name', 'name'],
+  'shell-root', [],
+  // PAGES
+  'index-page', [],
+  // COMPONENTS
+  'link-header-cmp', ['name', 'nameInternal'],
+  'greeting-cmp', ['name', 'name'],
 ];
 
-// Load the shell custom elements which lazily loads the underlying component.
+// Register custom elements which lazily loads the underlying component.
 registerLazyCustomElements(ELEMENTS_METADATA);
+
+// Register the router custom element.
+registerRouterElement(document, customElements, ROUTES);

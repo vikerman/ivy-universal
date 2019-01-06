@@ -1,7 +1,6 @@
 import { Component, Input, NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 @Component({
-  selector: 'greeting',
   template: `
   <h2>Hello {{name}}. Here are some links to help you start: </h2>
   `,

@@ -1,4 +1,3 @@
-import { ɵmarkDirty as markDirty } from '@angular/core';
 import { ObjectOrientedRenderer3, RElement, RComment, RText, RendererFactory3, Renderer3 } from '@angular/core/src/render3/interfaces/renderer';
 
 const REHYDRATED = '__REHYDRATED__';

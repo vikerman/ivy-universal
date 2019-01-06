@@ -24,7 +24,7 @@ const PORT = process.env.PORT || 4000;
 const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
-const { ELEMENTS_MAP, NG_BITS, registerCustomElement } = require('../dist/server/main');
+const { ELEMENTS_MAP, NG_BITS, registerCustomElement, registerRouterElement, ROUTES } = require('../dist/server/main');
 
 // Patch addEventListener to setup jsaction attributes.
 let actionIndex = 0;
@@ -68,9 +68,11 @@ app.engine('html',
         );
       }
 
-      // Add the shell component. This will trigger the rendring of the
+      registerRouterElement(doc, (doc as any).__ce__, ROUTES);
+
+      // Add the shell component. This will trigger the rendering of the
       // app starting from the shell.
-      const shell = doc.createElement('async-shell');
+      const shell = doc.createElement('shell-root');
       doc.body.insertAdjacentElement('afterbegin', shell);
 
       // Render in the next tick after all microtasks have been flushed.

@@ -42,8 +42,8 @@ export function strictEquals(value1: any, value2: any): boolean {
 export function getDefaultAttributeToPropertyInputs(
   inputs: { propName: string, templateName: string }[]) {
   const attributeToPropertyInputs: { [key: string]: string } = {};
-  inputs.forEach(({ propName, templateName }) => {
-    attributeToPropertyInputs[camelToDashCase(templateName)] = propName;
+  inputs.forEach(({ propName }) => {
+    attributeToPropertyInputs[camelToDashCase(propName)] = propName;
   });
 
   return attributeToPropertyInputs;

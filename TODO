@@ -32,3 +32,5 @@ ANGULAR ELEMENTS:
   only as a mechanism to transfer state from server to client.
 - Using ComponentFactoryResolver in getComponentInputs pulls in a lot/whole of
   @angular/core.
+- Why is the observedAttribute based on internal template name?
+

@@ -149,11 +149,11 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
           const propNames = Object.keys(
             (this.componentType as ComponentType<T>).ngComponentDef['inputs']);
           for (const propName of propNames) {
-            const templateName = this.getTemplateNameFromPropertyName(propName);
-            const attributeName = camelToDashCase(templateName);
-            if (element[propName] != null) {
+            const attributeName = camelToDashCase(propName);
+            const value = element[propName] || this.initialProperties.get(propName);
+            if (value != null) {
               const jsonValue =
-                JSON.stringify(element[propName]).replace(/\"/g, '\'');
+                JSON.stringify(value).replace(/\"/g, '\'');
               element.setAttribute(attributeName, jsonValue);
             }
           }
@@ -219,8 +219,11 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
         // only for initial attribute values and not for subsequent changes.
         // (This is different from default Angular Elements behavior)
         let parsedValue = value;
-        if (value) {
-          parsedValue = JSON.parse(value.replace(/\'/g, '"'));
+        if (!isNode()) {
+          // Try to JSON.parse initial attribute value only on the browser.
+          if (value) {
+            parsedValue = JSON.parse(value.replace(/\'/g, '"'));
+          }
         }
         this.initialProperties.set(propName, parsedValue);
       } else if (propName === '_boot') {
@@ -269,14 +272,24 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
     }
   }
 
+  private inferModuleName(localName: string) {
+    let moduleName = localName;
+    if (localName.endsWith('-cmp')) {
+      moduleName = localName.substr(0, localName.length - 4);
+    } else if (localName.endsWith('-page')) {
+      moduleName = localName.substr(0, localName.length - 5);
+    }
+    return moduleName;
+  }
+
   private loadAndInitializeComponent(): Promise<void> {
     if (this.loading) {
       return;
     }
     this.loading = true;
     const localName = this.componentType as string;
-    const moduleName = localName.startsWith('async-') ?
-      localName.substr(6) : localName;
+    // Infer the module name from the element name.
+    const moduleName = this.inferModuleName(localName);
     return Promise.all([this.ngBitsLoader(), this.moduleLoader(moduleName)])
         .then(([ngBits, module]) => {
 
@@ -284,20 +297,15 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
       const exports = Object.keys(module);
       let compType = null;
       for (const exp of exports) {
+        // Assume there is only one exported component per module.
         if (module[exp]['ngComponentDef'] != null) {
-          // Find the component matching the selector.
-          let selectors: string[][] = module[exp]['ngComponentDef'].selectors;
-          for (let sels of selectors) {
-            if (sels[0] === moduleName) {
-              compType = module[exp];
-              break;
-            }
-          }
+          compType = module[exp];
+          break;
         }
       }
 
       if (!compType) {
-        console.error(`Did not find exported component in ${moduleName} with selector '${moduleName}'`);
+        console.error(`Did not find any exported components in ${moduleName}`);
       } else {
         this.componentType = compType as ComponentType<T>;
         this.isLazy = false; // Behave like non-lazy component from now on.
@@ -378,7 +386,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
     inputs.forEach(prop => {
       const templateName = componentDef['inputs'][prop];
       const value = isNode() ?
-       element[prop] : // On the server use the properties for initial values.
+       element[prop] || this.initialProperties.get(prop) : // On the server use the properties first for initial values.
        this.initialProperties.get(prop);
        if (value !== undefined) {
         component[templateName] = value;

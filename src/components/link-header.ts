@@ -3,8 +3,11 @@ import { Component, Input, NgModule, CUSTOM_ELEMENTS_SCHEMA, ɵmarkDirty as mark
 import { NgIfModule } from '../lib/modules/ngif.module';
 import { NgForModule } from '../lib/modules/ngfor.module';
 
+// Look ma, no selectors
+// The custom element name for this component will be auto-generated as
+// '<filename>-cmp' - So 'link-header-cmp' can be used when referencing this
+// component in other components.
 @Component({
-  selector: 'link-header',
   template: `
   <button (click)="onClick()">Press</button>
   <div *ngIf="nameInternal.startsWith('ivy')">
@@ -12,7 +15,8 @@ import { NgForModule } from '../lib/modules/ngfor.module';
       <h3 *ngIf="s.startsWith('I')">Hello</h3>{{s}}
     </div>
   </div>
-  <async-greeting [name]="nameInternal"></async-greeting>
+  <!-- greeting-cmp is a lazy reference to the greeting component -->
+  <greeting-cmp [name]="nameInternal"></greeting-cmp>
   `,
 })
 export class LinkHeader {
@@ -25,17 +29,17 @@ export class LinkHeader {
   onClick() {
     this.strings.push('!!!');
     if (++this.count > 2) {
-      // After 2 clicks change the binding on the child component that should
-      // lazy load the child element code and re-render.
+      // After 2 clicks change the binding on the child component which causes
+      // it to get fetched and rendered.
       this.nameInternal = `ivy${this.count}`;
     }
-    // Tell Ivy that this component state has changed to reevaluate templates.
+    // Tell Ivy that this component state has changed.
     markDirty(this);
   }
 }
 
-// Add only non-lazy references here. For lazy reference to other elements
-// just directly use them in the template.
+// Add only non-lazy references here. For lazy reference to other components
+// just directly use them in the template with the '-cmp' suffix.
 @NgModule({
   declarations: [
     LinkHeader,
