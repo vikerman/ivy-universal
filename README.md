@@ -59,6 +59,4 @@ Let's say the currently active component changes its state based on the click ha
 
 This way we can have a progressive bootstrapping strategy that loads components only on demand.
 
-This is just an illustration of one possible strategy as an illustration of how rehydration of SSR nodes is useful - but with the current organization of components as individually loadable units we can now tune the load strategy that makes sense for the application.
-
-In the future configurable prefetch and load strategies will be added to the project.
+This is just an illustration of one possible strategy of how rehydration of SSR nodes is useful - but with the current organization of components as individually loadable units we can now tune the load strategy that makes sense for the application. In the future configurable prefetch and load strategies will be added to the project.
