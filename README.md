@@ -22,7 +22,7 @@ Navigate to http://localhost:4000
 The example illustrates how Angular Ivy makes the following possible
 
 1. "Automatic" code splitting at component and route level
-1. Server-side Rendering with Angular Ivy
+1. Server-side Rendering(SSR) with Angular Ivy
 1. Selective client side rehydration based on user events / data binding changes
 
 Coming soon:
@@ -59,4 +59,4 @@ Let's say the currently active component changes its state based on the click ha
 
 This way we can have a progressive bootstrapping strategy that loads components only on demand.
 
-This is just an illustration of one possible strategy of how rehydration of SSR nodes is useful - but with the current organization of components as individually loadable units we can now tune the load strategy that makes sense for the application. In the future configurable prefetch and load strategies will be added to the project.
+This is just an illustration of one possible strategy and how rehydration of SSR nodes is useful - but with the current organization of components as individually loadable units we can now tune the load strategy that makes sense for the application. In the future configurable prefetch and load strategies will be added to the project.
