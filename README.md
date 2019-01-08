@@ -47,7 +47,7 @@ The webpack magic comments in https://github.com/vikerman/ivy-universal/blob/mas
 On the server the page for the current route gets rendered(more on this later). The rendered HTML is sent to the client. On the client the only code that runs is a bootstrapping code. This code does the following:
 
 - Setup a global event handler on the document in order to buffer events.
-- Registers a shell Custom Element for every known component in the system. This does *not* load the actual component code. Just uses the component metadat to watch for property binding changes.
+- Registers a shell Custom Element for every known component in the system. This does *not* load the actual component code. It just uses the component metadata to watch for property binding changes.
 
 At this point no Angular specific code or component code has been loaded. (Current bootstrap size without polyfills: ~11 Kb)
 
