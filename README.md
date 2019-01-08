@@ -53,7 +53,7 @@ At this point no Angular specific code has been loaded.
 
 When a user initiates an event (say click a button) - The global event handler walks up the DOM tree from the event target till it find what appears to be a component root. It then uses webpack loader to load the chunk corresponding to the component.
 
-The component on bootstrapping rehydrates the DOM node sent by the server using the [rehydration renderer](https://github.com/vikerman/ivy-universal/blob/master/src/lib/rehydration/rehydration_renderer.ts). This lets the component become active without having to load the code for its child components because as of now they didn't require to be re-rendered.
+The component on bootstrapping rehydrates the DOM node sent by the server using the [rehydration renderer](https://github.com/vikerman/ivy-universal/blob/master/src/lib/rehydration/rehydration_renderer.ts). This lets the component become active without having to load the code for its child components because as of now they weren't required to be re-rendered.
 
 Let's say the currently active component changes its state based on the click handler and that resulted in chaging the data binding for the child - The shell Custom Element setup for the child component recognizes that its input properties have changed. In reaction to this the child Custom Element fetches the chunk coresponding to its component. The child component in turn boots up by rehydrating on top its server generated nodes and the process continues.
 
