@@ -1,4 +1,4 @@
-import { Component, Input, NgModule, CUSTOM_ELEMENTS_SCHEMA, ɵmarkDirty as markDirty } from '@angular/core';
+import { Component, Input, NgModule, ɵmarkDirty as markDirty } from '@angular/core';
 
 import { NgIfModule } from '../lib/modules/ngif.module';
 import { NgForModule } from '../lib/modules/ngfor.module';
@@ -46,6 +46,5 @@ export class LinkHeader {
   ],
   exports: [LinkHeader],
   imports: [NgIfModule, NgForModule],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class LinkHeaderModule {}

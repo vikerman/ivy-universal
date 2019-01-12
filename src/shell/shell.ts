@@ -1,4 +1,4 @@
-import { Component, Input, NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, NgModule } from '@angular/core';
 
 @Component({
   template: `
@@ -16,6 +16,5 @@ export class ShellComponent {
     ShellComponent,
   ],
   exports: [ShellComponent],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ShellComponentModule { }
