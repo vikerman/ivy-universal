@@ -2,6 +2,7 @@ import { Component, Input, NgModule, ɵmarkDirty as markDirty } from '@angular/c
 
 import { NgIfModule } from '../lib/modules/ngif.module';
 import { NgForModule } from '../lib/modules/ngfor.module';
+import { GreetingModule } from './greeting-cmp';
 
 // Look ma, no selectors
 // The custom element name for this component will be auto-generated as
@@ -15,7 +16,6 @@ import { NgForModule } from '../lib/modules/ngfor.module';
       <h3 *ngIf="s.startsWith('I')">Hello</h3>{{s}}
     </div>
   </div>
-  <!-- greeting-cmp is a lazy reference to the greeting component -->
   <greeting-cmp [name]="nameInternal"></greeting-cmp>
   `,
 })
@@ -45,6 +45,6 @@ export class LinkHeader {
     LinkHeader,
   ],
   exports: [LinkHeader],
-  imports: [NgIfModule, NgForModule],
+  imports: [NgIfModule, NgForModule, GreetingModule],
 })
 export class LinkHeaderModule {}

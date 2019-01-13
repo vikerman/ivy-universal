@@ -96,7 +96,7 @@ const ELEMENTS_METADATA = [
   // PAGES
   'index-page', [],
   // COMPONENTS
-  'link-header-cmp', ['name', 'nameInternal'],
+  'link-header', ['name', 'nameInternal'],
   'greeting-cmp', ['name', 'name'],
 ];
 

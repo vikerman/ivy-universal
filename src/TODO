@@ -17,6 +17,8 @@ IVY:
 - Recover from Rehydration mismatch.
 - Language Service is borked with Ivy directive references (Can't recognize
   *ngIf and *ngFor).
+- Need access to getLContext from @angular/core. For now hard-coding the patched
+  property name, offsets and flags.
 
 ANGULAR ELEMENTS:
 - Change Ivy Element Strategy to restore properties and render with a single

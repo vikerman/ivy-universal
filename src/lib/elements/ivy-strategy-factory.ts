@@ -11,6 +11,7 @@ import { NgElementStrategy, NgElementStrategyEvent, NgElementStrategyFactory } f
 import { camelToDashCase } from './utils';
 import { isNode } from '../utils/utils';
 import { EventContract } from '../tsaction/event_contract';
+import { isChildComponent } from '../utils/lview';
 
 /** Time in milliseconds to wait before destroying the component ref when disconnected. */
 const DESTROY_DELAY = 10;
@@ -158,14 +159,34 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
             }
           }
         }
-        this.initializeComponent(element,
-          this.componentType as ComponentType<T>);
+
+        // Check whether this element is actually just a
+        // non-lazy child component of another component - in which case we
+        // don't try to taker it over using the custom element.
+        if (isChildComponent(element)) {
+          // Set that in the DOM so that this knowledge is transferred to 
+          // client.
+          element.setAttribute('__c', '');
+        } else {
+          this.initializeComponent(element,
+            this.componentType as ComponentType<T>);
+        }
       }
     } else {
       // Dummy initialize the events till the actual output streams are
       // available after loading the component lazily.
       this.events = new MyObservable<NgElementStrategyEvent>(
         observer => {this.observer = observer;}) as any;
+
+      if (isChildComponent(element)) {
+        // Mark this component as child component for future reference.
+        element.setAttribute('__c', '');
+        return;
+      }
+
+      if (this.isMarkedChildComponent()) {
+        return;
+      }
 
       if (this.initialProperties.get('_boot') != null || 
           !this.isServerSideRendered()) {
@@ -195,7 +216,11 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
   }
 
   private isServerSideRendered() {
-    return this.element.getAttribute('_s') != null;
+    return this.element.getAttribute('__s') != null;
+  }
+
+  private isMarkedChildComponent() {
+    return this.element.getAttribute('__c') != null;    
   }
 
   /**
@@ -258,7 +283,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
     // For a lazy component
     // For properties set before the connection, just store them in the initial values
     // For properties set after connection, actual load the component and do change detection
-    if (!this.isConnected || !this.isServerSideRendered()) {
+    if (!this.isConnected || !this.isServerSideRendered() || this.isMarkedChildComponent()) {
       this.initialProperties.set(propName, value);
     } else {
       // Clone the initial properties and set the new properties.
@@ -274,9 +299,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
 
   private inferModuleName(localName: string) {
     let moduleName = localName;
-    if (localName.endsWith('-cmp')) {
-      moduleName = localName.substr(0, localName.length - 4);
-    } else if (localName.endsWith('-page')) {
+    if (localName.endsWith('-page')) {
       moduleName = localName.substr(0, localName.length - 5);
     }
     return moduleName;
@@ -310,7 +333,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
         this.componentType = compType as ComponentType<T>;
         this.isLazy = false; // Behave like non-lazy component from now on.
         this.ngBits = ngBits; // Store the ngBits reference.
-
+        
         // Do initial rendering with initial properties so that hydration
         // can match initial state on the DOM.
         this.initializeComponent(this.element, this.componentType);

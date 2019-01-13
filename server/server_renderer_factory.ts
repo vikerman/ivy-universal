@@ -49,7 +49,7 @@ export function getRendererFactory(doc: Document): RendererFactory3 {
       (doc as any).__current_element__ = hostElement;
       if (hostElement) {
         // Mark the host element as server-side rendered.
-        hostElement.setAttribute('_s', '');
+        hostElement.setAttribute('__s', '');
       }
       // Patch the Domino mutation handler to insert the start comment node
       // whenever the end comment node is inserted.

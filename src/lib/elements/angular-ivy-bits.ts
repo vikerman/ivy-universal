@@ -22,10 +22,10 @@ import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer'
 import { RehydrationRendererFactory } from '../rehydration/rehydration_renderer';
 
 export function render<T>(
-    componentType: ComponentType<T>, 
-    element: Element,
-    hostFeatures: Array<(<U>(c: U, cd: ComponentDef<U>) => void)>,
-    rendererFactory?: RendererFactory3 | null) {
+  componentType: ComponentType<T>,
+  element: Element,
+  hostFeatures: Array<(<U>(c: U, cd: ComponentDef<U>) => void)>,
+  rendererFactory?: RendererFactory3 | null) {
   return renderComponent(componentType, {
     host: element as any,
     hostFeatures: [
@@ -40,7 +40,7 @@ export function render<T>(
 export const markDirty = ɵmarkDirty;
 
 export function initializeOutputs<T, U>(componentType: ComponentType<T>,
-    observer: Observer<U> | Subscription) {
+  observer: Observer<U> | Subscription) {
   const outputs = Object.keys(componentType.ngComponentDef['outputs']);
   const eventEmitters = outputs.map(propName => {
     const templateName = componentType.ngComponentDef['outputs'][propName];
@@ -56,5 +56,5 @@ export function initializeOutputs<T, U>(componentType: ComponentType<T>,
     return events.subscribe(this.observer);
   } else {
     return events;
-  }  
+  }
 }

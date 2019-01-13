@@ -2,7 +2,7 @@ import { Component, NgModule } from '@angular/core';
 
 @Component({
   template: `
-    <link-header-cmp name="ivy"></link-header-cmp>
+    <link-header name="ivy"></link-header>
   `,
 })
 export class Index {
