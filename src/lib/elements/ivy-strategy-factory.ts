@@ -272,24 +272,13 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
     }
   }
 
-  private inferModuleName(localName: string) {
-    let moduleName = localName;
-    if (localName.endsWith('-cmp')) {
-      moduleName = localName.substr(0, localName.length - 4);
-    } else if (localName.endsWith('-page')) {
-      moduleName = localName.substr(0, localName.length - 5);
-    }
-    return moduleName;
-  }
-
   private loadAndInitializeComponent(): Promise<void> {
     if (this.loading) {
       return;
     }
     this.loading = true;
-    const localName = this.componentType as string;
-    // Infer the module name from the element name.
-    const moduleName = this.inferModuleName(localName);
+    // Module name same as element localName.
+    const moduleName = this.componentType as string;
     return Promise.all([this.ngBitsLoader(), this.moduleLoader(moduleName)])
         .then(([ngBits, module]) => {
 

@@ -43,6 +43,9 @@ function loadShell() {
 }
 
 function loadPage(module: string) {
+   if (module.endsWith('-page')) {
+     module = module.substr(0, module.length - 5);
+   }
    return import(
      /* webpackInclude: /\.ts$/ */
      /* webpackExclude: /\.spec.ts$/ */
@@ -96,7 +99,7 @@ const ELEMENTS_METADATA = [
   // PAGES
   'index-page', [],
   // COMPONENTS
-  'link-header-cmp', ['name', 'nameInternal'],
+  'link-header', ['name', 'nameInternal'],
   'greeting-cmp', ['name', 'name'],
 ];
 

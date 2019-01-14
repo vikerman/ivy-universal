@@ -1,6 +1,7 @@
 import { Component, Input, NgModule } from '@angular/core';
 
 @Component({
+  selector: 'a-greeting-cmp',
   template: `
   <h2>Hello {{name}}. Here are some links to help you start: </h2>
   `,

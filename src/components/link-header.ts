@@ -3,10 +3,6 @@ import { Component, Input, NgModule, ɵmarkDirty as markDirty } from '@angular/c
 import { NgIfModule } from '../lib/modules/ngif.module';
 import { NgForModule } from '../lib/modules/ngfor.module';
 
-// Look ma, no selectors
-// The custom element name for this component will be auto-generated as
-// '<filename>-cmp' - So 'link-header-cmp' can be used when referencing this
-// component in other components.
 @Component({
   template: `
   <button (click)="onClick()">Press</button>
@@ -15,7 +11,6 @@ import { NgForModule } from '../lib/modules/ngfor.module';
       <h3 *ngIf="s.startsWith('I')">Hello</h3>{{s}}
     </div>
   </div>
-  <!-- greeting-cmp is a lazy reference to the greeting component -->
   <greeting-cmp [name]="nameInternal"></greeting-cmp>
   `,
 })
