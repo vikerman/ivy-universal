@@ -42,7 +42,7 @@ export class LazyIvyElementStrategyFactory<T> implements NgElementStrategyFactor
     private contract?: EventContract
   ) { }
 
-  create(injector: Injector): NgElementStrategy {
+  create(): NgElementStrategy {
     return new LazyIvyElementStrategy(this.ngBitsLoader, this.componentType,
       this.rendererFactory, this.moduleLoader, this.contract);
   }
@@ -53,6 +53,7 @@ interface NgBits<T> {
     componentType: ComponentType<T>,
     element: Element,
     hostFeatures: Array<(<U>(c: U, cd: ComponentDef<U>) => void)>,
+    injector?: Injector,
     rendererFactory?: RendererFactory3): T;
 
   markDirty(component: T): void;
@@ -339,6 +340,19 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
   }
 
   /**
+   * Walk up the Element tree to find an element with an injector or null.
+   *
+   * @param element The backing HTMLElement
+   */
+  private getInheritedElementInjector(element: HTMLElement) : Injector | undefined {
+    let injector: Injector | undefined = element['__injector__'];
+    while (injector == null && element != null) {
+      element = element.parentElement;
+    }
+    return injector;
+  }
+
+  /**
    * Renders the component on the host element and initializes the inputs and outputs.
    */
   protected initializeComponent(element: HTMLElement, componentType: ComponentType<T>) {
@@ -354,6 +368,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
           // Initialize the component properties before rendering.
           this.initializeInputs.bind(this, element),
         ],
+        this.getInheritedElementInjector(element),
         this.rendererFactory,
     );
 

@@ -13,7 +13,7 @@
  * Ivy element that can be loaded at a later time.
  */
 
-import {Injector, Type} from '@angular/core';
+import {Injector, ɵComponentType as ComponentType} from '@angular/core';
 import {Subscription} from 'rxjs';
 
 import {NgElementStrategy, NgElementStrategyFactory} from './element-strategy';
@@ -98,10 +98,6 @@ export type WithProperties<P> = {
  */
 export interface NgElementConfig {
   /**
-   * The injector to use for retrieving the component's factory.
-   */
-  injector: Injector;
-  /**
    * An optional custom strategy factory to use instead of the default.
    * The strategy controls how the transformation is performed.
    */
@@ -129,8 +125,8 @@ export interface NgElementConfig {
  * @publicApi
  */
 export function createCustomElement<P>(
-    component: Type<any>, config: NgElementConfig): NgElementConstructor<P> {
-  const inputs = getComponentInputs(component, config.injector);
+    component: ComponentType<any>, config: NgElementConfig): NgElementConstructor<P> {
+  const inputs = getComponentInputs(component);
 
   const strategyFactory = config.strategyFactory;
 
@@ -147,20 +143,20 @@ export function createCustomElement<P>(
     static readonly['observedAttributes'] = 
       ['_boot'].concat(Object.keys(attributeToPropertyInputs));
 
-    constructor(injector?: Injector) {
+    constructor() {
       super();
 
       // Note that some polyfills (e.g. document-register-element) do not call the constructor.
       // Do not assume this strategy has been created.
       // TODO(andrewseguin): Add e2e tests that cover cases where the constructor isn't called. For
       // now this is tested using a Google internal test suite.
-      this.ngElementStrategy = strategyFactory.create(injector || config.injector);
+      this.ngElementStrategy = strategyFactory.create();
     }
 
     attributeChangedCallback(
         attrName: string, oldValue: string|null, newValue: string, namespace?: string): void {
       if (!this.ngElementStrategy) {
-        this.ngElementStrategy = strategyFactory.create(config.injector);
+        this.ngElementStrategy = strategyFactory.create();
       }
 
       const propName = attributeToPropertyInputs[attrName] || attrName;
@@ -169,7 +165,7 @@ export function createCustomElement<P>(
 
     connectedCallback(): void {
       if (!this.ngElementStrategy) {
-        this.ngElementStrategy = strategyFactory.create(config.injector);
+        this.ngElementStrategy = strategyFactory.create();
       }
 
       this.ngElementStrategy.connect(this);

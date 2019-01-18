@@ -5,7 +5,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { Injector, Type } from '@angular/core';
+import { ɵComponentType as ComponentType } from '@angular/core';
 
 /**
  * Convert a camelCased string to kebab-cased.
@@ -50,14 +50,16 @@ export function getDefaultAttributeToPropertyInputs(
 }
 
 /**
- * Gets a component's set of inputs. Uses the injector to get the component factory where the inputs
- * are defined.
+ * Gets a component's set of inputs.
  */
-export function getComponentInputs(
-  component: Type<any>, injector: Injector): { propName: string, templateName: string }[] {
+export function getComponentInputs(component: ComponentType<any>): { propName: string, templateName: string }[] {
   // DO NOT use the actual ComponentFactoryResolver token here.
   // It is not used and will pull in entire @angular/core into the main chunk!!!
-  const componentFactoryResolver = injector.get('dummy');
-  const componentFactory = componentFactoryResolver.resolveComponentFactory(component);
-  return componentFactory.inputs;
+  const inputs = Object.keys(component.ngComponentDef['inputs']).map(input => {
+    return {
+      propName: input,
+      templateName: component.ngComponentDef['inputs'][input]
+    };
+  });
+  return inputs;
 }

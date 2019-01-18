@@ -2,6 +2,7 @@ import { Component, Input, NgModule, ɵmarkDirty as markDirty } from '@angular/c
 
 import { NgIfModule } from '../lib/modules/ngif.module';
 import { NgForModule } from '../lib/modules/ngfor.module';
+import { Counter } from '../services/counter';
 
 @Component({
   template: `
@@ -19,14 +20,16 @@ export class LinkHeader {
   nameInternal: string;
 
   strings = ['Ivy', 'is', 'good'];
-  count = 0;
+
+  constructor(private readonly counter: Counter) {}
 
   onClick() {
     this.strings.push('!!!');
-    if (++this.count > 2) {
+    this.counter.increment();
+    if (this.counter.current() > 2) {
       // After 2 clicks change the binding on the child component which causes
       // it to get fetched and rendered.
-      this.nameInternal = `ivy${this.count}`;
+      this.nameInternal = `ivy${this.counter.current()}`;
     }
     // Tell Ivy that this component state has changed.
     markDirty(this);

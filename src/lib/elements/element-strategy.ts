@@ -40,5 +40,5 @@ export interface NgElementStrategy {
  */
 export interface NgElementStrategyFactory {
   /** Creates a new instance to be used for an NgElement. */
-  create(injector: Injector): NgElementStrategy;
+  create(): NgElementStrategy;
 }
