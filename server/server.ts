@@ -48,7 +48,7 @@ Node.prototype.addEventListener = patchedAddEventListener;
 // Universal express-engine.
 app.engine('html',
   (filePath: string,
-    options: {},
+    options: { req: { originalUrl: string} },
     callback: (err?: Error | null, html?: string) => void) => {
     try {
       const doc: Document = domino.createDocument(getDocument(filePath));
@@ -68,7 +68,7 @@ app.engine('html',
         );
       }
 
-      registerRouterElement(doc, (doc as any).__ce__, ROUTES);
+      registerRouterElement(doc, (doc as any).__ce__, options.req.originalUrl, ROUTES);
 
       // Add the shell component. This will trigger the rendering of the
       // app starting from the shell.
@@ -88,9 +88,7 @@ app.engine('html',
 app.set('view engine', 'html');
 app.set('views', DIST_FOLDER);
 
-// Example Express Rest API endpoints
-// app.get('/api/**', (req, res) => { });
-// Server static files from /browser
+// Server static files from DIST folder.
 app.get('*.*', express.static(DIST_FOLDER, {
   maxAge: '1y'
 }));

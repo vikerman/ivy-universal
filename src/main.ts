@@ -5,7 +5,7 @@ import { registerCustomElement } from './lib/elements/register-custom-element';
 import { EventContract } from './lib/tsaction/event_contract';
 
 import { ROUTES } from './routes';
-import { registerRouterElement } from './lib/router/router';
+import { RouteConfig } from './lib/router/router';
 
 // TODO : Move this even earlier so that chances of missing DOM events are
 // zero/low.
@@ -39,6 +39,13 @@ function loadShell() {
   return import(
     /* webpackChunkName: "shell-root" */
     './shell/shell'
+  );
+}
+
+function loadRouter() {
+  return import(
+    /* webpackChunkName: "router" */
+    './lib/router/router'
   );
 }
 
@@ -98,6 +105,7 @@ const ELEMENTS_METADATA = [
   'shell-root', [],
   // PAGES
   'index-page', [],
+  'about-page', [],
   // COMPONENTS
   'link-header', ['name', 'nameInternal'],
   'greeting-cmp', ['name', 'name'],
@@ -106,5 +114,31 @@ const ELEMENTS_METADATA = [
 // Register custom elements which lazily loads the underlying component.
 registerLazyCustomElements(ELEMENTS_METADATA);
 
-// Register the router custom element.
-registerRouterElement(document, customElements, ROUTES);
+// Lazily load the router when a route change happens or an anchor link with relative path was clicked.
+let routerLoading = false;
+function lazilyLoadRouter(loadRouter: () => Promise<any>,
+    routes: RouteConfig[],
+    contract: EventContract,
+    forceInitialNavigation = false,
+    onLoad?: (router: {navigate: (newPath?: string) => void}) => void) {
+  if (!routerLoading) {
+    routerLoading = true;
+    loadRouter().then(router => {
+      // Router takes over handling of route changes and router link clicks after it comes up.
+      router.registerRouterElement(document, customElements, '', routes, contract,
+        forceInitialNavigation, onLoad);
+    });
+  }
+}
+
+// Watch for anchor link clicks and history changes then load the full router to take over.
+window.addEventListener('popstate', evt => {
+  lazilyLoadRouter(loadRouter, ROUTES, contract, /* forceNavigation */ true);
+});
+
+contract.setRouterCallback(targetUrl => {
+  lazilyLoadRouter(loadRouter, ROUTES, contract, /* forceNavigation */ false, router => {
+    window.history.pushState(null, '', targetUrl);
+    router.navigate(targetUrl);
+  });
+});

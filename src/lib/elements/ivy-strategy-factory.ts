@@ -223,7 +223,11 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
         if (!isNode()) {
           // Try to JSON.parse initial attribute value only on the browser.
           if (value) {
-            parsedValue = JSON.parse(value.replace(/\'/g, '"'));
+            try {
+              parsedValue = JSON.parse(value.replace(/\'/g, '"'));
+            } catch (e) {
+              // Just use the original value without parsing.
+            }
           }
         }
         this.initialProperties.set(propName, parsedValue);

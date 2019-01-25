@@ -31,6 +31,9 @@ export class EventContract {
   // event buffering.
   private booted = new Set<Element>();
 
+  // Router callback to use when anchor links are clicked.
+  private routerCallback: (url: string) => void;
+
   constructor(private container: HTMLElement, private types: string[]) { }
 
   /**
@@ -93,7 +96,21 @@ export class EventContract {
     return null;
   }
 
-  private processEvent(event: Event) {
+  private processRouterLinkClick(event: Event) {
+    // Get the target link and check whether it's absolute.
+    const targetLink = (event.target as HTMLAnchorElement).getAttribute('href');
+    // TODO: Replace with a proper check.
+    const isAbsolute = targetLink.startsWith('http://') || targetLink.startsWith('https://');
+    if (this.routerCallback && !!targetLink && !isAbsolute) {
+      // Router is active. So do a client side route change.
+      event.preventDefault();
+
+      this.routerCallback(targetLink);
+    }
+    // else router is not active or URL is absolute. Just do a normal server side navigation.
+  }
+
+  private bufferEvent(event: Event) {
     const eventData = this.getMatchingTsActionElement(event);
     if (eventData) {
       const existing = this.buffer.get(eventData.host);
@@ -123,6 +140,16 @@ export class EventContract {
       }
       // Let the host know that it is go time!!
       eventData.host.setAttribute('_boot', '');
+    }
+  }
+
+  private processEvent(event: Event) {
+    if ((event.target as Node).nodeType === Node.ELEMENT_NODE &&
+        (event.target as Element).localName === 'a') {
+      this.processRouterLinkClick(event);
+    }
+    else {
+      this.bufferEvent(event);
     }
   }
 
@@ -158,5 +185,12 @@ export class EventContract {
    */
   boot(el: Element) {
     this.booted.add(el);
+  }
+
+  /**
+   * Set a callback for router click links.
+   */
+  setRouterCallback(callback: (url: string) => void) {
+    this.routerCallback = callback;
   }
 }
