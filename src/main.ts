@@ -98,7 +98,9 @@ function registerLazyCustomElements(elementsMetadata: any[]) {
         './lib/elements/angular-ivy-bits'
       ),
       localName, componentType,
-      undefined /* use default rehydration renderer */, loader, contract);
+      undefined /* use default rehydration renderer */,
+      undefined, /* default fetch fn */
+      loader, contract);
   }
 }
 

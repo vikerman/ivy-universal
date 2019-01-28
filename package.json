@@ -24,13 +24,14 @@
     "core-js": "^2.5.4",
     "document-register-element": "1.8.1",
     "ivy-domino": "^2.1.2",
+    "node-fetch-npm": "^2.0.2",
     "rxjs": "~6.3.3",
     "source-map-explorer": "^1.6.0",
     "tslib": "^1.9.0",
     "zone.js": "~0.8.26"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~0.11.0",
+    "@angular-devkit/build-angular": "^0.12.3",
     "@angular/cli": "git://github.com/angular/cli-builds.git",
     "@angular/compiler-cli": "git://github.com/angular/compiler-cli-builds.git#master-ivy-aot",
     "@angular/language-service": "~7.1.0",

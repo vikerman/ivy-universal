@@ -13,6 +13,7 @@ import * as express from 'express';
 import { join } from 'path';
 import { getRendererFactory } from './server_renderer_factory';
 import { patchDocument } from './custom_elements_shim';
+import { waitForFetches, getPendingFetchCount, getNodeFetch } from './fetch';
 
 // Enable Production mode in Ivy.
 (global as any).ngDevMode = false;
@@ -20,11 +21,24 @@ import { patchDocument } from './custom_elements_shim';
 // Express server
 const app = express();
 
-const PORT = process.env.PORT || 4000;
+const PORT = parseInt(process.env.PORT) || 4000;
 const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
 const { ELEMENTS_MAP, NG_BITS, registerCustomElement, registerRouterElement, ROUTES } = require('../dist/server/main');
+
+function waitForNextTick(): Promise<void> {
+  return new Promise((resolve, _) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+async function waitForRenderComplete() {
+  do {
+    await waitForFetches();
+    await waitForNextTick();
+  } while (getPendingFetchCount() > 0);
+}
 
 // Patch addEventListener to setup jsaction attributes.
 let actionIndex = 0;
@@ -64,7 +78,8 @@ app.engine('html',
           (doc as any).__ce__,
           () => NG_BITS,
           element, ELEMENTS_MAP[element],
-          rendererFactory
+          rendererFactory,
+          getNodeFetch('localhost', PORT),
         );
       }
 
@@ -75,11 +90,10 @@ app.engine('html',
       const shell = doc.createElement('shell-root');
       doc.body.insertAdjacentElement('afterbegin', shell);
 
-      // Render in the next tick after all microtasks have been flushed.
-      // This is needed to make sure all the custom elements have been rendered.
-      setTimeout(() => {
+      // Wait for all outstanding fetches and rendering to complete.
+      waitForRenderComplete().then(() => {
         callback(null, doc.documentElement.outerHTML);
-      }, 0);
+      });
     } catch (e) {
       callback(e);
     }

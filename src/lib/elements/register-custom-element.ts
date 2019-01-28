@@ -12,19 +12,23 @@ export function registerCustomElement<T>(
     tag: string,
     component: ComponentType<T>,
     rendererFactory?: RendererFactory3,
+    fetchFn?: (url: string) => Promise<string>,
     moduleLoader?: (module: string) => Promise<any>,
     contract?: EventContract) {
  
+  if (fetchFn == null) {
+    fetchFn = async (url: string) => {return (await window.fetch(url)).text()};
+  }
   let strategyFactory: NgElementStrategyFactory;
   if (typeof component === 'function') {
     // A direct componentType was provided. Initialize that immediately.
     strategyFactory = new LazyIvyElementStrategyFactory(ngBitsLoader,
-      component as any, rendererFactory, moduleLoader, contract);
+      component as any, rendererFactory, fetchFn, moduleLoader, contract);
   } else {
     // Create a custom element that lazily loads its backing component either
     // on user event or input change.
     strategyFactory = new LazyIvyElementStrategyFactory(ngBitsLoader,
-      tag, rendererFactory, moduleLoader, contract);
+      tag, rendererFactory, fetchFn, moduleLoader, contract);
   }
 
   ceRegistry.define(tag, createCustomElement(component, {strategyFactory}));

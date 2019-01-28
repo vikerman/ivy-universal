@@ -1,5 +1,7 @@
 import { Component, Input, ɵmarkDirty as markDirty } from '@angular/core';
 import { Counter } from '../services/counter';
+import { Items } from '../models/Items';
+import { InitialData } from '../lib/photon/initial-data';
 
 @Component({
   template: `
@@ -9,12 +11,21 @@ import { Counter } from '../services/counter';
       <h3 *ngIf="s.startsWith('I')">Hello</h3>{{s}}
     </div>
   </div>
+  <div *ngIf="list">
+    <div *ngFor="let item of list.items">
+      {{item.name}} : {{item.value}}
+    </div>
+  </div>
   <greeting-cmp [name]="nameInternal"></greeting-cmp>
   `,
 })
 export class LinkHeader {
   @Input('name')
   nameInternal: string;
+
+  @InitialData('/assets/ivy.json')
+  @Input()
+  list: Items;
 
   strings = ['Ivy', 'is', 'good'];
 

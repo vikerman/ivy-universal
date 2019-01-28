@@ -8,7 +8,6 @@
  */
 
 import {
-  EventEmitter,
   ɵLifecycleHooksFeature as LifecycleHooksFeature,
   ɵmarkDirty,
   ɵrenderComponent as renderComponent,
@@ -23,6 +22,8 @@ import { ComponentDef } from '@angular/core/src/render3';
 import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer';
 
 import { RehydrationRendererFactory } from '../rehydration/rehydration_renderer';
+
+type Emitter = import('@angular/core').EventEmitter<any>;
 
 let rootInjector: Injector | null = null;
 function getRootInjector(): Injector {
@@ -60,7 +61,7 @@ export function initializeOutputs<T, U>(componentType: ComponentType<T>,
   const eventEmitters = outputs.map(propName => {
     const templateName = componentType.ngComponentDef['outputs'][propName];
 
-    const emitter = this.component[propName] as EventEmitter<any>;
+    const emitter = this.component[propName] as Emitter;
     return emitter.pipe(map((value: any) => ({ name: templateName, value })));
   });
 

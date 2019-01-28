@@ -11,6 +11,7 @@ import { NgElementStrategy, NgElementStrategyEvent, NgElementStrategyFactory } f
 import { camelToDashCase } from './utils';
 import { isNode } from '../utils/utils';
 import { EventContract } from '../tsaction/event_contract';
+import { getDataInputs } from '../photon/initial-data';
 
 /** Time in milliseconds to wait before destroying the component ref when disconnected. */
 const DESTROY_DELAY = 10;
@@ -38,13 +39,14 @@ export class LazyIvyElementStrategyFactory<T> implements NgElementStrategyFactor
     private ngBitsLoader: () => Promise<any>,
     private componentType: ComponentType<T> | string,
     private rendererFactory?: RendererFactory3,
+    private fetchFn?: (url: string) => Promise<string>,
     private moduleLoader?: (module: string) => Promise<any>,
     private contract?: EventContract
   ) { }
 
   create(): NgElementStrategy {
     return new LazyIvyElementStrategy(this.ngBitsLoader, this.componentType,
-      this.rendererFactory, this.moduleLoader, this.contract);
+      this.rendererFactory, this.fetchFn, this.moduleLoader, this.contract);
   }
 }
 
@@ -60,6 +62,22 @@ interface NgBits<T> {
 
   initializeOutputs<T, U>(componentType: ComponentType<T>,
     observer: Observer<U> | null) : Observable<NgElementStrategyEvent> | Subscription;
+}
+
+/**
+ * Change double quotes to single quotes in JSON string so that it can be easily
+ * serialized as attribute value without having to escape double quotes to
+ * &quot; everytime(and there are lot of them in a JSON string).
+ */
+function replaceDoubleQuotesWithSingle(json :string) {
+  return json.replace(/\"/g, '\'');
+}
+
+/**
+ * Do the ooposite of above before JSON.parse-ing a string.
+ */
+function replaceSingleQuotesWithDouble(str :string) {
+  return str.replace(/\'/g, '"');
 }
 
 /**
@@ -117,6 +135,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
     private ngBitsLoader: () => NgBits<T> | Promise<NgBits<T>>,
     private componentType: ComponentType<T> | string,
     private rendererFactory?: RendererFactory3,
+    private fetchFn?: (url: string) => Promise<string>,
     private moduleLoader?: (module: string) => Promise<any>,
     private contract?: EventContract) {
       this.isLazy = typeof this.componentType === 'string'; 
@@ -154,13 +173,36 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
             const value = element[propName] || this.initialProperties.get(propName);
             if (value != null) {
               const jsonValue =
-                JSON.stringify(value).replace(/\"/g, '\'');
+                replaceDoubleQuotesWithSingle(JSON.stringify(value));
               element.setAttribute(attributeName, jsonValue);
             }
           }
         }
-        this.initializeComponent(element,
-          this.componentType as ComponentType<T>);
+
+        // Get the initial Data for the component.
+        const componentType = this.componentType as ComponentType<T>;
+        const inputs = getDataInputs(componentType);
+        const fetchPromises: Array<Promise<any>> = [];
+        if (inputs) {
+          inputs.forEach((value, key) => {
+            fetchPromises.push(this.fetchFn(value).then(resp => {
+              // Set the element property to the parsed JSON value of the
+              // initialData fetch.
+              element[key] = JSON.parse(resp);
+
+              // Set as attribute also so that it is serialized in the DOM.
+              element.setAttribute(key, replaceDoubleQuotesWithSingle(resp));
+            }));
+          });
+        }
+        if (fetchPromises.length === 0) {
+          this.initializeComponent(element, componentType);
+        } else {
+          // Wait for the all the fetches to be completed.
+          Promise.all(fetchPromises).then(() => {
+            this.initializeComponent(element, componentType);
+          });
+        }
       }
     } else {
       // Dummy initialize the events till the actual output streams are
@@ -224,7 +266,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
           // Try to JSON.parse initial attribute value only on the browser.
           if (value) {
             try {
-              parsedValue = JSON.parse(value.replace(/\'/g, '"'));
+              parsedValue = JSON.parse(replaceSingleQuotesWithDouble(value));
             } catch (e) {
               // Just use the original value without parsing.
             }
