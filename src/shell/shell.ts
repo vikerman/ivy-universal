@@ -1,4 +1,4 @@
-import { Component, NgModule } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   template: `
@@ -13,12 +13,3 @@ import { Component, NgModule } from '@angular/core';
 export class ShellComponent {
   title = 'ivy';
 }
-
-// Add only non-lazy references here.
-@NgModule({
-  declarations: [
-    ShellComponent,
-  ],
-  exports: [ShellComponent],
-})
-export class ShellComponentModule { }

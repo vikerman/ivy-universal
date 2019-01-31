@@ -1,4 +1,4 @@
-import { Component, NgModule } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   template: `
@@ -7,12 +7,3 @@ import { Component, NgModule } from '@angular/core';
 })
 export class Index {
 }
-
-// Add only non-lazy references here.
-@NgModule({
-  declarations: [
-    Index,
-  ],
-  exports: [Index],
-})
-export class IndexModule { }

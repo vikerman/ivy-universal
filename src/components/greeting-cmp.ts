@@ -1,4 +1,4 @@
-import { Component, Input, NgModule } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Counter } from '../services/counter';
 
 @Component({
@@ -13,12 +13,3 @@ export class Greeting {
 
   constructor(private readonly counter: Counter) {}
 }
-
-// Add only non-lazy references here.
-@NgModule({
-  declarations: [
-    Greeting,
-  ],
-  exports: [Greeting],
-})
-export class GreetingModule { }

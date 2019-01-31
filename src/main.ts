@@ -30,6 +30,7 @@ function loadElement(module: string) {
   return import(
     /* webpackInclude: /\.ts$/ */
     /* webpackExclude: /\.spec.ts$/ */
+    /* webpackExclude: /\.module.ts$/ */
     /* webpackChunkName: "[request]-cmp" */
     `./components/${module}`
   );
@@ -56,6 +57,7 @@ function loadPage(module: string) {
    return import(
      /* webpackInclude: /\.ts$/ */
      /* webpackExclude: /\.spec.ts$/ */
+     /* webpackExclude: /\.module.ts$/ */
      /* webpackChunkName: "[request]-page" */
      `./pages/${module}`
    );
