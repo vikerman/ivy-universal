@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Counter } from '../services/counter';
+import { Counter } from '../../services/counter';
 
 @Component({
   template: `

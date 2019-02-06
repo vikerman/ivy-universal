@@ -31,8 +31,8 @@ function loadElement(module: string) {
     /* webpackInclude: /\.ts$/ */
     /* webpackExclude: /\.spec.ts$/ */
     /* webpackExclude: /\.module.ts$/ */
-    /* webpackChunkName: "[request]-cmp" */
-    `./components/${module}`
+    /* webpackChunkName: "[request]" */
+    `./components/${module}/${module}`
   );
 }
 
@@ -59,7 +59,7 @@ function loadPage(module: string) {
      /* webpackExclude: /\.spec.ts$/ */
      /* webpackExclude: /\.module.ts$/ */
      /* webpackChunkName: "[request]-page" */
-     `./pages/${module}`
+     `./pages/${module}/${module}`
    );
 }
 

@@ -1,10 +1,10 @@
 // This file should be auto-generated.
 
 import { ShellComponent as SHELL } from './shell/shell';
-import { LinkHeader as ELEMENT1 } from './components/link-header';
+import { LinkHeader as ELEMENT1 } from './components/link-header/link-header';
 import { Index as PAGE1 } from './pages/index';
-import { About as PAGE2 } from './pages/about';
-import { Greeting as ELEMENT2 } from './components/greeting-cmp';
+import { About as PAGE2 } from './pages/about/about';
+import { Greeting as ELEMENT2 } from './components/greeting-cmp/greeting-cmp';
 import * as _ngBits from './lib/elements/angular-ivy-bits';
 
 export const ELEMENTS_MAP = {
