@@ -15,7 +15,7 @@ import {
   ɵComponentType as ComponentType,
   Injector,
   ɵAPP_ROOT as APP_ROOT,
-  createInjector,
+  ɵcreateInjector as createInjector,
 } from '@angular/core';
 import { merge, Observer, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
