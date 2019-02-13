@@ -8,10 +8,11 @@
     "e2e": "ng e2e",
     "build:dev": "ng build --aot && ng run ivy:server",
     "build:prod": "ng build --prod && ng run ivy:server:production --bundle-dependencies all",
-    "serve": "node dist/server/main.js",
-    "start": "npm run build:dev && npm run serve",
-    "start:prod": "npm run build:prod && npm run serve",
-    "build": "npm run build:dev"
+    "serve:prod": "node dist/server/main.js",
+    "start:prod": "npm run build:prod && npm run serve:prod",
+    "build": "npm run build:dev",
+    "start": "DEV_MODE=1 node ./scripts/watch.js",
+    "serve": "npm run start"
   },
   "private": true,
   "dependencies": {
@@ -45,6 +46,7 @@
     "karma-coverage-istanbul-reporter": "~2.0.1",
     "karma-jasmine": "~1.1.2",
     "karma-jasmine-html-reporter": "^0.2.2",
+    "livereload": "^0.7.0",
     "nodemon": "^1.18.10",
     "protractor": "~5.4.0",
     "ts-loader": "^5.3.1",

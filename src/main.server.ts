@@ -112,6 +112,7 @@ app.get('*', (req, res) => {
 
 // Start up the Node server
 app.listen(PORT, () => {
+  // Don't change this message or livereload in dev mode would stop working :)
   console.log(`Node Express server listening on http://localhost:${PORT}`);
 });
 
@@ -124,5 +125,15 @@ const templateCache: { [key: string]: string } = {};
  * Get the document at the file path
  */
 function getDocument(filePath: string): string {
-  return templateCache[filePath] = templateCache[filePath] || fs.readFileSync(filePath).toString();
+  if (templateCache[filePath]) {
+    return templateCache[filePath];
+  }
+  let contents = fs.readFileSync(filePath).toString();
+  // Add livereload script if in dev mode
+  if (process.env['DEV_MODE']) {
+    contents = contents.replace('</head>',
+      `<script src="http://localhost:35729/livereload.js?snipver=1"></script></head>`);
+  }
+  templateCache[filePath] = contents;
+  return contents;
 }
