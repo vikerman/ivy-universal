@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { LinkHeader } from './link-header';
-import { NgIfModule } from '../../../lib/modules/ngif.module';
-import { NgForModule } from '../../../lib/modules/ngfor.module';
+import { CommonModule } from '@angular/common';
 
 // Add only non-lazy references here. For lazy reference to other components
 // just directly use them in the template with the '-cmp' suffix.
@@ -10,6 +9,6 @@ import { NgForModule } from '../../../lib/modules/ngfor.module';
     LinkHeader,
   ],
   exports: [LinkHeader],
-  imports: [NgIfModule, NgForModule],
+  imports: [CommonModule]
 })
 export class LinkHeaderModule {}

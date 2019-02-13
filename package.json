@@ -31,8 +31,8 @@
     "zone.js": "~0.8.26"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~0.11.0",
-    "@angular/cli": "git://github.com/angular/cli-builds.git",
+    "@angular-devkit/build-angular": "^0.13.1",
+    "@angular/cli": "^7.3.1",
     "@angular/compiler-cli": "git://github.com/angular/compiler-cli-builds.git#master-ivy-aot",
     "@angular/language-service": "~7.1.0",
     "@types/jasmine": "~2.8.8",
