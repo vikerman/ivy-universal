@@ -4,10 +4,10 @@ import { RouteConfig } from './lib/router/router';
 export const ROUTES: RouteConfig[] = [
   {
     path: '/',
-    component: 'index-page',
+    component: 'page-index',
   },
   {
     path: '/about',
-    component: 'about-page',
+    component: 'page-about',
   }
 ];

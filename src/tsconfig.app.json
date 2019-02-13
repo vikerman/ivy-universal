@@ -6,6 +6,8 @@
   },
   "exclude": [
     "test.ts",
+    "*.server.ts",
+    "lib/server/**/*.ts",
     "**/*.spec.ts"
   ],
   "angularCompilerOptions": {

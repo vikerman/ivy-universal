@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { Greeting } from './greeting-cmp';
+import { Greeting } from './greeting';
 
 // Add only non-lazy references here.
 @NgModule({

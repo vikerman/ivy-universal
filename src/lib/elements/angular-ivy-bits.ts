@@ -14,8 +14,6 @@ import {
   ɵrenderComponent as renderComponent,
   ɵComponentType as ComponentType,
   Injector,
-  ɵAPP_ROOT as APP_ROOT,
-  ɵcreateInjector as createInjector,
 } from '@angular/core';
 import { merge, Observer, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -23,16 +21,6 @@ import { ComponentDef } from '@angular/core/src/render3';
 import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer';
 
 import { RehydrationRendererFactory } from '../rehydration/rehydration_renderer';
-
-let rootInjector: Injector | null = null;
-function getRootInjector(): Injector {
-  if (rootInjector == null) {
-    rootInjector = createInjector(null, null, [
-      {provide: APP_ROOT, useValue: true}
-    ]);
-  }
-  return rootInjector;
-}
 
 export function render<T>(
     componentType: ComponentType<T>, 
@@ -48,7 +36,7 @@ export function render<T>(
     ],
     // Use the provided rendererFactory or default to the Rehydration one.
     rendererFactory: rendererFactory || RehydrationRendererFactory,
-    injector: injector || getRootInjector(),
+    injector: injector,
   });
 }
 

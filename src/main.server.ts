@@ -1,21 +1,128 @@
-// This file should be auto-generated.
+// TODO: Simplify this file enough so that devs can configure custom express settings in this file
+// as needed without having to wade through all this code.
 
-import { ShellComponent as SHELL } from './shell/shell';
-import { LinkHeader as ELEMENT1 } from './components/link-header/link-header';
-import { Index as PAGE1 } from './pages/index';
-import { About as PAGE2 } from './pages/about/about';
-import { Greeting as ELEMENT2 } from './components/greeting-cmp/greeting-cmp';
-import * as _ngBits from './lib/elements/angular-ivy-bits';
+import * as fs from 'fs';
 
-export const ELEMENTS_MAP = {
-  'shell-root': SHELL,
-  'index-page': PAGE1,
-  'about-page': PAGE2,
-  'link-header': ELEMENT1,
-  'greeting-cmp': ELEMENT2,
+// TODO : Replace with actual domino once https://github.com/fgnass/domino/pull/138
+// is merged.
+import * as domino from 'ivy-domino';
+
+// Setup global class types that are needed since devmode sources don't
+// down-level decorators which point to these values during runtime.
+Object.assign(global, (domino as any).impl);
+
+import * as express from 'express';
+import { join } from 'path';
+import { getRendererFactory } from './lib/server/server_renderer_factory';
+import { patchDocument } from './lib/server/custom_elements_shim';
+
+// Keep the following as `require` so that webpack doesn't move it before HTMLElement is defined
+// above.
+const { registerCustomElement }  = require('./lib/elements/register-custom-element');
+const { registerRouterElement } = require('./lib/router/router');
+const NG_BITS = require ('./lib/elements/angular-ivy-bits');
+
+import {ROUTES} from './routes';
+import {ELEMENTS_MAP} from './elements.server';
+
+import {environment} from './environments/environment';
+
+// Enable Production mode in Ivy.
+if (environment.production) {
+  (global as any).ngDevMode = false;
+}
+
+// Express server
+const app = express();
+
+const PORT = process.env.PORT || 4200;
+const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
+
+// Patch addEventListener to setup jsaction attributes.
+let actionIndex = 0;
+function patchedAddEventListener(type, listener, options) {
+  const el: Element = this;
+  const doc: any = el.ownerDocument;
+  // Get the currently rendererd custom element tag name.
+  const localName = doc.__current_element__.localName;
+  type = type === 'click' ? '' : `${type}:`;
+
+  // Add a jsaction with hint on which Custom Element handles the event.
+  // TODO: Probably need to look for corner cases around self nested components
+  // with content projection.
+  el.setAttribute('tsaction', `${type}${localName}.${actionIndex++}`);
+
+  oldEventListener.call(this, type, listener, options);
 };
+const oldEventListener = Node.prototype.addEventListener;
+Node.prototype.addEventListener = patchedAddEventListener;
 
-export { registerCustomElement } from './lib/elements/register-custom-element';
-export { registerRouterElement } from './lib/router/router';
-export const NG_BITS = _ngBits;
-export { ROUTES } from './routes';
+// Universal express-engine.
+app.engine('html',
+  (filePath: string,
+    options: { req: { originalUrl: string} },
+    callback: (err?: Error | null, html?: string) => void) => {
+    try {
+      const doc: Document = domino.createDocument(getDocument(filePath));
+      patchDocument(doc);
+      (doc as any).__elements_map__ = ELEMENTS_MAP;
+      const rendererFactory = getRendererFactory(doc);
+
+      // TODO: Clone the CustomElementRegistry instead of recreating it every
+      // time?
+      const elements = Object.keys(ELEMENTS_MAP);
+      for (const element of elements) {
+        registerCustomElement(
+          (doc as any).__ce__,
+          () => NG_BITS,
+          element, ELEMENTS_MAP[element],
+          rendererFactory
+        );
+      }
+
+      registerRouterElement(doc, (doc as any).__ce__, options.req.originalUrl, ROUTES);
+
+      // Add the shell component. This will trigger the rendering of the
+      // app starting from the shell.
+      const shell = doc.createElement('shell-root');
+      doc.body.insertAdjacentElement('afterbegin', shell);
+
+      // Render in the next tick after all microtasks have been flushed.
+      // This is needed to make sure all the custom elements have been rendered.
+      setTimeout(() => {
+        callback(null, doc.documentElement.outerHTML);
+      }, 0);
+    } catch (e) {
+      callback(e);
+    }
+  });
+
+app.set('view engine', 'html');
+app.set('views', DIST_FOLDER);
+
+// Server static files from DIST folder.
+app.get('*.*', express.static(DIST_FOLDER, {
+  maxAge: '1y'
+}));
+
+// All regular routes use the Universal engine
+app.get('*', (req, res) => {
+  res.render('index', { req });
+});
+
+// Start up the Node server
+app.listen(PORT, () => {
+  console.log(`Node Express server listening on http://localhost:${PORT}`);
+});
+
+/**
+ * This holds a cached version of each index used.
+ */
+const templateCache: { [key: string]: string } = {};
+
+/**
+ * Get the document at the file path
+ */
+function getDocument(filePath: string): string {
+  return templateCache[filePath] = templateCache[filePath] || fs.readFileSync(filePath).toString();
+}

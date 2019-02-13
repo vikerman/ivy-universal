@@ -27,19 +27,22 @@ patchAppendChildAndInsertBefore();
 // that can scale well for 100s of components without bloating
 // runtime.js/main.js.
 function loadElement(module: string) {
+  if (module.startsWith('app-')) {
+    module = module.substr(4);
+  }
   return import(
     /* webpackInclude: /\.ts$/ */
     /* webpackExclude: /\.spec.ts$/ */
     /* webpackExclude: /\.module.ts$/ */
     /* webpackChunkName: "[request]" */
-    `./components/${module}/${module}`
+    `./app/components/${module}/${module}`
   );
 }
 
 function loadShell() {
   return import(
     /* webpackChunkName: "shell-root" */
-    './shell/shell'
+    './app/shell/shell'
   );
 }
 
@@ -51,15 +54,15 @@ function loadRouter() {
 }
 
 function loadPage(module: string) {
-   if (module.endsWith('-page')) {
-     module = module.substr(0, module.length - 5);
+   if (module.startsWith('page-')) {
+     module = module.substr(5);
    }
    return import(
      /* webpackInclude: /\.ts$/ */
      /* webpackExclude: /\.spec.ts$/ */
      /* webpackExclude: /\.module.ts$/ */
      /* webpackChunkName: "[request]-page" */
-     `./pages/${module}/${module}`
+     `./app/pages/${module}/${module}`
    );
 }
 
@@ -88,7 +91,7 @@ function registerLazyCustomElements(elementsMetadata: any[]) {
     let loader = loadElement;
     if (localName == 'shell-root') {
       loader = loadShell;
-    } else if (localName.endsWith('-page')) {
+    } else if (localName.startsWith('page-')) {
       loader = loadPage;
     }
 
@@ -102,15 +105,15 @@ function registerLazyCustomElements(elementsMetadata: any[]) {
   }
 }
 
-// TODO: How to generate this statically when property renaming is in effect?
+// TODO : Remove need for internal property name here.
 const ELEMENTS_METADATA = [
   'shell-root', [],
   // PAGES
-  'index-page', [],
-  'about-page', [],
+  'page-index', [],
+  'page-about', [],
   // COMPONENTS
-  'link-header', ['name', 'nameInternal'],
-  'greeting-cmp', ['name', 'name'],
+  'app-link-header', ['name', 'name'],
+  'app-greeting', ['name', 'name'],
 ];
 
 // Register custom elements which lazily loads the underlying component.

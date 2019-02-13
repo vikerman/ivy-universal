@@ -3,15 +3,15 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "build:client-and-server-bundles": "ng build --prod && ng run ivy:server:production",
-    "compile:server": "webpack --config webpack.server.config.js --progress --colors",
-    "build:ssr": "npm run build:client-and-server-bundles && npm run compile:server",
-    "serve:ssr": "node dist/server"
+    "build:dev": "ng build --aot && ng run ivy:server",
+    "build:prod": "ng build --prod && ng run ivy:server:production --bundle-dependencies all",
+    "serve": "node dist/server/main.js",
+    "start": "npm run build:dev && npm run serve",
+    "start:prod": "npm run build:prod && npm run serve",
+    "build": "npm run build:dev"
   },
   "private": true,
   "dependencies": {
@@ -45,6 +45,7 @@
     "karma-coverage-istanbul-reporter": "~2.0.1",
     "karma-jasmine": "~1.1.2",
     "karma-jasmine-html-reporter": "^0.2.2",
+    "nodemon": "^1.18.10",
     "protractor": "~5.4.0",
     "ts-loader": "^5.3.1",
     "ts-node": "~7.0.0",
