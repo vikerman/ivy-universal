@@ -36,7 +36,9 @@ if (environment.production) {
 const app = express();
 
 const PORT = process.env.PORT || 4200;
-const DIST_FOLDER = join(process.cwd(), 'src');
+
+// User 'src' for index.html if using Bazel build.
+const DIST_FOLDER = join(process.cwd(), process.env.RUNFILES ? 'src' : 'dist/ivy');
 
 // Patch addEventListener to setup jsaction attributes.
 let actionIndex = 0;
