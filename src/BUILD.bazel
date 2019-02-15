@@ -1,0 +1,50 @@
+load("@npm_bazel_typescript//:defs.bzl", "ts_library", "ts_config")
+load("@build_bazel_rules_nodejs//:defs.bzl", "nodejs_binary")
+
+package(default_visibility=["//:__subpackages__"])
+
+ts_config(
+    name = "tsconfig-server",
+    src = "tsconfig.server.json",
+    deps = ["//:tsconfig.json", "//src:tsconfig.app.json"]
+)
+
+ts_config(
+    name = "tsconfig-app",
+    src = "tsconfig.app.json",
+    deps = ["//:tsconfig.json"]
+)
+
+ts_library(
+    name = "routes",
+    srcs = ["routes.ts"],
+    deps = ["//src/lib/router"],
+)
+
+ts_library(
+    name = "server_lib",
+    srcs = glob(["*.server.ts"]),
+    tsconfig = ":tsconfig-server",
+    deps = [
+        "@npm//@types",
+        "@npm//express",
+        "@npm//ivy-domino",
+        "@npm//tslib",
+        "//src/environments",
+        "//src/lib/server",
+        "//src/app",
+        ":routes",
+    ],
+)
+
+nodejs_binary(
+    name = "server",
+    data = [
+        ":server_lib",
+        ":index.html",
+        # TODO(alexeagle): why is this needed but express isn't?
+        "@npm//ivy-domino",
+        "//src/lib/elements",
+    ],
+    entry_point = "ivy_universal/src/main.server.js",    
+)

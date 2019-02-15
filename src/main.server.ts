@@ -36,7 +36,7 @@ if (environment.production) {
 const app = express();
 
 const PORT = process.env.PORT || 4200;
-const DIST_FOLDER = join(process.cwd(), 'dist/ivy');
+const DIST_FOLDER = join(process.cwd(), 'src');
 
 // Patch addEventListener to setup jsaction attributes.
 let actionIndex = 0;

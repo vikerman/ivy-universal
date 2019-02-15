@@ -1,0 +1,8 @@
+load("@build_bazel_rules_nodejs//:defs.bzl", "nodejs_binary", "rollup_bundle")
+
+rollup_bundle(
+    name = "bundle",
+    additional_entry_points = ["ivy_universal/src/bazel_experimental/b"],
+    entry_point = "ivy_universal/src/bazel_experimental/index",
+    srcs = glob(["*.js"])
+)

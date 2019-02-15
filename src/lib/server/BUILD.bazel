@@ -1,0 +1,13 @@
+load("@npm_bazel_typescript//:defs.bzl", "ts_library")
+
+package(default_visibility=["//:__subpackages__"])
+
+ts_library(
+    name = "server",
+    srcs = glob(["*.ts"]),
+    tsconfig = "//src:tsconfig-server",
+    deps = [
+        "@npm//@types",
+        "@npm//@angular/core",
+    ],
+)
