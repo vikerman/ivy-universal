@@ -32,3 +32,14 @@ install_bazel_dependencies()
 # Setup TypeScript toolchain
 load("@npm_bazel_typescript//:defs.bzl", "ts_setup_workspace")
 ts_setup_workspace()
+
+# Transitive dep of @npm_angular_bazel - should be removed
+http_archive(
+    name = "io_bazel_rules_webtesting",
+    urls = ["https://github.com/bazelbuild/rules_webtesting/releases/download/0.3.0/rules_webtesting.tar.gz"],
+    sha256 = "1c0900547bdbe33d22aa258637dc560ce6042230e41e9ea9dad5d7d2fca8bc42",
+)
+
+load("@io_bazel_rules_webtesting//web:repositories.bzl", "web_test_repositories")
+
+web_test_repositories()
