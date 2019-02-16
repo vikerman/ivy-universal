@@ -12,6 +12,7 @@ import * as domino from 'ivy-domino';
 Object.assign(global, (domino as any).impl);
 
 import * as express from 'express';
+import * as http from 'http';
 import { join } from 'path';
 import { getRendererFactory } from './lib/server/server_renderer_factory';
 import { patchDocument } from './lib/server/custom_elements_shim';
@@ -32,6 +33,8 @@ if (environment.production) {
   (global as any).ngDevMode = false;
 }
 
+const DEV_MODE = process.env['DEV_MODE'];
+
 // Express server
 const app = express();
 
@@ -39,6 +42,9 @@ const PORT = process.env.PORT || 4200;
 
 // User 'src' for index.html if using Bazel build.
 const DIST_FOLDER = join(process.cwd(), process.env.RUNFILES ? 'src' : 'dist/ivy');
+
+// Port to check the errors at.
+const ERROR_PORT = process.env.ERROR_PORT || 8888;
 
 // Patch addEventListener to setup jsaction attributes.
 let actionIndex = 0;
@@ -109,7 +115,23 @@ app.get('*.*', express.static(DIST_FOLDER, {
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
-  res.render('index', { req });
+  if (DEV_MODE) {
+    // Get the errors and report if any.
+    let rawData = '';
+    http.get(`http://localhost:${ERROR_PORT}/`, (errorRes) => {
+      errorRes.on('data', (chunk) => { rawData += chunk.toString(); });
+      errorRes.on('close', () => {
+        if (rawData !== '[]') {
+          let errors = JSON.parse(rawData) as string[];
+          res.send(errors[0]);
+        } else {
+          res.render('index', { req });
+        }
+      });
+    });
+  } else {
+    res.render('index', { req });
+  }
 });
 
 // Start up the Node server
@@ -132,7 +154,7 @@ function getDocument(filePath: string): string {
   }
   let contents = fs.readFileSync(filePath).toString();
   // Add livereload script if in dev mode
-  if (process.env['DEV_MODE']) {
+  if (DEV_MODE) {
     contents = contents.replace('</head>',
       `<script src="http://localhost:35729/livereload.js?snipver=1"></script></head>`);
   }
