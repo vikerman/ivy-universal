@@ -1,3 +1,4 @@
 build --symlink_prefix=dist/
 # Enable Ivy ngtsc compiler
 build --define=compile=aot
+build --genrule_strategy=standalone --spawn_strategy=standalone
