@@ -6,6 +6,7 @@ ng_module(
     name = "app",
     srcs = glob(["**/*.ts"]),
     tsconfig = "//src:tsconfig-app",
+    type_check = False,
     deps = [
         "@npm//@angular/core",
         "@npm//@angular/common",
