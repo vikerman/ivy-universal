@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^0.13.1",
-    "@angular/bazel": "github:alexeagle/bazel-builds#master-ivy-aot",
+    "@angular/bazel": "github:angular/bazel-builds#master-ivy-aot",
     "@angular/cli": "^7.3.1",
     "@angular/compiler-cli": "github:angular/compiler-cli-builds#master-ivy-aot",
     "@angular/language-service": "~7.1.0",
