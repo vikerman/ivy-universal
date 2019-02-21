@@ -1,4 +1,5 @@
 load("@npm_angular_bazel//:index.bzl", "ng_module")
+load("@npm_angular_bazel//src:ng_rollup_bundle.bzl", "ng_rollup_bundle")
 
 package(default_visibility=["//:__subpackages__"])
 
