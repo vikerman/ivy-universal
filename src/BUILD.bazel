@@ -1,5 +1,6 @@
-load("@build_bazel_rules_typescript//:defs.bzl", "ts_library", "ts_config")
-load("@build_bazel_rules_nodejs//:defs.bzl", "nodejs_binary")
+load("@npm_bazel_typescript//:defs.bzl", "ts_library", "ts_config")
+load("@build_bazel_rules_nodejs//:defs.bzl", "nodejs_binary", "rollup_bundle")
+load("@build_bazel_rules_nodejs//internal/web_package:web_package.bzl", "web_package")
 
 package(default_visibility=["//:__subpackages__"])
 
@@ -37,9 +38,44 @@ ts_library(
     ],
 )
 
+ts_library(
+    name = "client_lib",
+    srcs = ["main.ts"],
+    tsconfig = ":tsconfig-server",
+    deps = [
+        "@npm//@types",
+        "@npm//tslib",
+        "//src/environments",
+        "//src/lib/elements",
+        "//src/lib/tsaction",
+        "//src/lib/router",
+        "//src/lib/utils",
+        "//src/app",
+        ":routes",
+    ],
+)
+
+rollup_bundle(
+    name = "bundle",
+    entry_point = "src/main",
+    native_es_modules = True,
+    additional_entry_points = [
+        "src/app/pages/about/about",
+    ],
+    deps = [
+        ":client_lib",
+        "@npm//@angular/common",
+        "@npm//@angular/core",
+        "@npm//@angular/platform-browser",
+        "@npm//rxjs",
+    ],
+)
+
 nodejs_binary(
     name = "server",
     data = [
+        ":bundle_mjs",
+        ":bundle.es6.js",
         ":server_lib",
         ":index.html",
         # TODO(alexeagle): why is this needed but express isn't?
