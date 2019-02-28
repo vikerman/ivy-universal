@@ -1,0 +1,19 @@
+# Configuration for deployment to kubernetes
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: photon-demo-prod
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: photon-demo-prod
+    spec:
+      containers:
+      - name: photon-demo
+        image: gcr.io/internal-200822/photon-demo-image
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4200
