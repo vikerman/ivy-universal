@@ -38,7 +38,7 @@ const app = express();
 const PORT = process.env.PORT || 4200;
 
 // User 'src' for index.html if using Bazel build.
-const DIST_FOLDER = join(process.cwd(), process.env.RUNFILES ? 'src' : 'dist/ivy');
+const DIST_FOLDER = join(process.cwd(), process.env.RUNFILES ? 'src/package' : 'dist/ivy');
 
 // Patch addEventListener to setup jsaction attributes.
 let actionIndex = 0;

@@ -1,1 +1,11 @@
+load("@k8s_deploy//:defaults.bzl", "k8s_deploy")
+
 exports_files(["tsconfig.json"])
+
+k8s_deploy(
+    name = "deploy",
+    images = {
+        "gcr.io/internal-200822/photon-demo-image": "//src:image",
+    },
+    template = ":deployment.yaml",
+)
