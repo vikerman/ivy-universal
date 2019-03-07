@@ -25,12 +25,8 @@ const NG_BITS = require ('./lib/elements/angular-ivy-bits');
 import {ROUTES} from './routes';
 import {ELEMENTS_MAP} from './elements.server';
 
-import {environment} from './environments/environment';
-
-// Enable Production mode in Ivy.
-if (environment.production) {
-  (global as any).ngDevMode = false;
-}
+// Enable Production mode in Ivy on server.
+(global as any).ngDevMode = false;
 
 // Express server
 const app = express();
