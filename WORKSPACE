@@ -12,7 +12,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 #)
 local_repository(
   name = "build_bazel_rules_nodejs",
-  path = "/usr/local/google/home/alexeagle/Projects/rules_nodejs/bazel-bin/rules_nodejs_package",
+  path = "/Users/viks/rules_nodejs/bazel-bin/rules_nodejs_package",
 )
 
 # Setup the NodeJS toolchain

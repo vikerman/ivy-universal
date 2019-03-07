@@ -20,50 +20,42 @@ contract.listen();
 // a node is rehydrated and it shouldn't try to append/insert it.
 patchAppendChildAndInsertBefore();
 
-// Webpack provides a concise way([request]) to define named chunks without 
-// making this section big and letting us to use predictable names while
-// dynamically lazy loading chunks. While this section is concise there still
-// must be a single table somewhere to lookup the chunk names. Need to make sure
-// that can scale well for 100s of components without bloating
-// runtime.js/main.js.
 function loadElement(module: string) {
+  let name = '';
   if (module.startsWith('app-')) {
-    module = module.substr(4);
+    name = module.substr(4);
   }
-  return import(
-    /* webpackInclude: /\.ts$/ */
-    /* webpackExclude: /\.spec.ts$/ */
-    /* webpackExclude: /\.module.ts$/ */
-    /* webpackChunkName: "[request]" */
-    `./app/components/${module}/${module}`
-  );
+  switch (name) {
+    case 'link-header':
+      return import('./app/components/link-header/link-header');
+    case 'greeting':
+      return import('./app/components/greeting/greeting');
+    default:
+      throw new Error(`Unknown component module ${module}`);
+  }
 }
 
 function loadShell() {
-  return import(
-    /* webpackChunkName: "shell-root" */
-    './app/shell/shell'
-  );
+  return import('./app/shell/shell');
 }
 
 function loadRouter() {
-  return import(
-    /* webpackChunkName: "router" */
-    './lib/router/router'
-  );
+  return import('./lib/router/router');
 }
 
 function loadPage(module: string) {
+  let name ='';
    if (module.startsWith('page-')) {
-     module = module.substr(5);
+     name = module.substr(5);
    }
-   return import(
-     /* webpackInclude: /\.ts$/ */
-     /* webpackExclude: /\.spec.ts$/ */
-     /* webpackExclude: /\.module.ts$/ */
-     /* webpackChunkName: "[request]-page" */
-     `./app/pages/${module}/${module}`
-   );
+   switch (name) {
+    case 'index':
+      return import('./app/pages/index/index');
+    case 'about':
+      return import('./app/pages/about/about');
+    default:
+      throw new Error(`Unknown page module ${module}`);
+  }
 }
 
 /**
@@ -88,7 +80,7 @@ function registerLazyCustomElements(elementsMetadata: any[]) {
 
     // The Shell is loaded from the shell folder. So using a different
     // loader function for that.
-    let loader = loadElement;
+    let loader: (module: string) => Promise<any> = loadElement;
     if (localName == 'shell-root') {
       loader = loadShell;
     } else if (localName.startsWith('page-')) {
