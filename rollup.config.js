@@ -5,7 +5,7 @@ import node_resolve from 'rollup-plugin-node-resolve';
 export default {
   input: './out-tsc/app/main.js',
   output: {
-    dir: 'public/',
+    dir: 'dist/rollup',
     format: 'esm'
   },
   plugins: [
