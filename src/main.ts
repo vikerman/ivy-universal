@@ -58,6 +58,17 @@ function loadPage(module: string) {
   }
 }
 
+// Initialize seen component map and id for CSS encapsulation.
+function initializeSeenElements() {
+  const scriptEl = document.getElementById('_elements');
+  const elements = JSON.parse(scriptEl.textContent);
+  (document as any)._seenElements = new Map();
+  (document as any)._nextCompId = Object.keys(elements).length;
+  for (const element of Object.keys(elements)) {
+    (document as any)._seenElements.set(element, elements[element]);
+  }
+}
+
 /**
  * Parse the Ivy Element metadata and load shell Custom Elements
  * on the client that lazily bootstrap the actual component.
@@ -87,7 +98,9 @@ function registerLazyCustomElements(elementsMetadata: any[]) {
       loader = loadPage;
     }
 
-    registerCustomElement(customElements,
+    registerCustomElement(
+      document,
+      customElements,
       () => import(
         /* webpackChunkName: "renderer" */
         './lib/elements/angular-ivy-bits'
@@ -107,6 +120,10 @@ const ELEMENTS_METADATA = [
   'app-link-header', ['name', 'name'],
   'app-greeting', ['name', 'name'],
 ];
+
+// Initialize the seenElements list to setup CSS scoping properly and match
+// the scope Ids set on the server.
+initializeSeenElements();
 
 // Register custom elements which lazily loads the underlying component.
 registerLazyCustomElements(ELEMENTS_METADATA);

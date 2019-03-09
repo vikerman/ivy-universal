@@ -7,6 +7,7 @@ import { NgElementStrategyFactory } from './element-strategy';
 import { EventContract } from '../tsaction/event_contract';
 
 export function registerCustomElement<T>(
+    doc: Document,
     ceRegistry: CustomElementRegistry,
     ngBitsLoader: () => any | Promise<any>,
     tag: string,
@@ -18,12 +19,12 @@ export function registerCustomElement<T>(
   let strategyFactory: NgElementStrategyFactory;
   if (typeof component === 'function') {
     // A direct componentType was provided. Initialize that immediately.
-    strategyFactory = new LazyIvyElementStrategyFactory(ngBitsLoader,
+    strategyFactory = new LazyIvyElementStrategyFactory(doc, ngBitsLoader,
       component as any, rendererFactory, moduleLoader, contract);
   } else {
     // Create a custom element that lazily loads its backing component either
     // on user event or input change.
-    strategyFactory = new LazyIvyElementStrategyFactory(ngBitsLoader,
+    strategyFactory = new LazyIvyElementStrategyFactory(doc, ngBitsLoader,
       tag, rendererFactory, moduleLoader, contract);
   }
 

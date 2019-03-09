@@ -53,7 +53,7 @@ function nextTick(fn: () => void) {
 
 function callConnectedCallback(node: HTMLElement) {
   if (typeof (node as any)['connectedCallback'] === 'function') {
-    nextTick(() => ((node as any)['connectedCallback'] as Function).call(node));
+    nextTick(() => ((node as any)['connectedCallback'] as Function).call(node, node));
   }
 }
 

@@ -24,6 +24,8 @@ const NG_BITS = require ('./lib/elements/angular-ivy-bits');
 
 import {ROUTES} from './routes';
 import {ELEMENTS_MAP} from './elements.server';
+import { ComponentType } from '@angular/core/src/render3';
+import { ViewEncapsulation } from '@angular/core';
 
 // Enable Production mode in Ivy on server.
 (global as any).ngDevMode = false;
@@ -55,6 +57,20 @@ function patchedAddEventListener(type, listener, options) {
 const oldEventListener = Node.prototype.addEventListener;
 Node.prototype.addEventListener = patchedAddEventListener;
 
+function serializeSeenElements(doc: Document, shellEl: HTMLElement) {
+  const elements = {};
+  const d: Document & {_seenElements: Map<string, number>} = doc as any;
+  d._seenElements.forEach((val, key) => {
+    elements[key] = val;
+  });
+
+  const s = doc.createElement('script');
+  s.type = 'application/json';
+  s.id = '_elements';
+  s.appendChild(doc.createTextNode(JSON.stringify(elements)));
+  shellEl.insertAdjacentElement('afterend', s);
+}
+
 // Universal express-engine.
 app.engine('html',
   (filePath: string,
@@ -64,16 +80,28 @@ app.engine('html',
       const doc: Document = domino.createDocument(getDocument(filePath));
       patchDocument(doc);
       (doc as any).__elements_map__ = ELEMENTS_MAP;
-      const rendererFactory = getRendererFactory(doc);
+
+      // Initialize seen component map and id for CSS encapsulation.
+      (doc as any)._seenElements = new Map();
+      (doc as any)._nextCompId = 0;
 
       // TODO: Clone the CustomElementRegistry instead of recreating it every
       // time?
       const elements = Object.keys(ELEMENTS_MAP);
       for (const element of elements) {
+        const componentType: ComponentType<any> = ELEMENTS_MAP[element];
+        const encapsulation = componentType.ngComponentDef['encapsulation'];
+        const scoped = encapsulation != null ?
+          encapsulation === ViewEncapsulation.Emulated : false;
+
+        const rendererFactory = getRendererFactory(doc, scoped);
+
         registerCustomElement(
+          doc,
           (doc as any).__ce__,
           () => NG_BITS,
-          element, ELEMENTS_MAP[element],
+          element,
+          ELEMENTS_MAP[element],
           rendererFactory
         );
       }
@@ -88,6 +116,9 @@ app.engine('html',
       // Render in the next tick after all microtasks have been flushed.
       // This is needed to make sure all the custom elements have been rendered.
       setTimeout(() => {
+        // Add the current state of the _seenElements map.
+        serializeSeenElements(doc, shell);
+
         callback(null, doc.documentElement.outerHTML);
       }, 0);
     } catch (e) {

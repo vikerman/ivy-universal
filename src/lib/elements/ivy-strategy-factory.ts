@@ -9,7 +9,7 @@ import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer'
 
 import { NgElementStrategy, NgElementStrategyEvent, NgElementStrategyFactory } from './element-strategy';
 import { camelToDashCase } from './utils';
-import { isNode } from '../utils/utils';
+import { isNode, getComponentId } from '../utils/utils';
 import { EventContract } from '../tsaction/event_contract';
 
 /** Time in milliseconds to wait before destroying the component ref when disconnected. */
@@ -35,6 +35,7 @@ class MyObservable<T> {
 export class LazyIvyElementStrategyFactory<T> implements NgElementStrategyFactory {
 
   constructor(
+    private doc: Document,
     private ngBitsLoader: () => Promise<any>,
     private componentType: ComponentType<T> | string,
     private rendererFactory?: RendererFactory3,
@@ -43,12 +44,15 @@ export class LazyIvyElementStrategyFactory<T> implements NgElementStrategyFactor
   ) { }
 
   create(): NgElementStrategy {
-    return new LazyIvyElementStrategy(this.ngBitsLoader, this.componentType,
+    return new LazyIvyElementStrategy(this.doc,
+      this.ngBitsLoader, this.componentType,
       this.rendererFactory, this.moduleLoader, this.contract);
   }
 }
 
 interface NgBits<T> {
+  createStyle(doc: Document, styles: string[], compId: number);
+
   render<T>(
     componentType: ComponentType<T>,
     element: Element,
@@ -114,6 +118,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
   private newProperties: Map<string, any> | null = null;
 
   constructor(
+    private doc: Document,
     private ngBitsLoader: () => NgBits<T> | Promise<NgBits<T>>,
     private componentType: ComponentType<T> | string,
     private rendererFactory?: RendererFactory3,
@@ -360,6 +365,18 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
    * Renders the component on the host element and initializes the inputs and outputs.
    */
   protected initializeComponent(element: HTMLElement, componentType: ComponentType<T>) {
+    // Initialize styles if this the first time this component is being seen.
+    const name = element.localName;
+    const doc: Document&{_seenElements: Map<string, number>; _nextCompId: number}
+      = this.doc as any;
+    if (!doc._seenElements.has(name)) {
+      const compId = getComponentId(doc, name);
+      const styles: string[] = componentType.ngComponentDef['styles'];
+      if (styles && styles.length > 0) {
+        this.ngBits.createStyle(doc, styles, compId);
+      }
+    }
+
     // Do the initial rendering with a single renderComponent call.
     // This is needed not only for efficiency but also for rehydrating properly.
     this.component = this.ngBits.render(componentType, element,

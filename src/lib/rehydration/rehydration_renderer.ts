@@ -1,4 +1,5 @@
 import { ObjectOrientedRenderer3, RElement, RComment, RText, RendererFactory3, Renderer3 } from '@angular/core/src/render3/interfaces/renderer';
+import { getComponentId } from '../utils/utils';
 
 const REHYDRATED = '__REHYDRATED__';
 const TEMPLATE_END = '__T_END__'
@@ -11,17 +12,27 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
 
   private templateMode = false;
   private templateNodes: Node[] = [];
+  private componentId: number;
 
-  private constructor(private host: RElement) {
-    this.current = (host as any as Element).firstChild;
+  private constructor(private host: RElement, private scoped) {
+    const hostEl = (host as any as Element);
+    this.current = hostEl.firstChild;
+
+    if (this.scoped) {
+      // Get the component id to set for implementing scoped CSS.
+      this.componentId = getComponentId(document, hostEl.localName);
+
+      // Set the attribute that will be used by scoped CSS to set host styling.
+      hostEl.setAttribute(`_nghost-${this.componentId}`, '');
+    }
   }
 
   private static currentRenderer?: RehydrationRenderer;
-  static create(hostElement: RElement) {
+  static create(hostElement: RElement, scoped = false) {
     if (this.currentRenderer && this.currentRenderer.host === hostElement) {
       return this.currentRenderer;
     } else {
-      return (this.currentRenderer = new RehydrationRenderer(hostElement));
+      return (this.currentRenderer = new RehydrationRenderer(hostElement, scoped));
     }
   }
 
@@ -135,7 +146,11 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
         return (this.getCurrentNodeAndAdvance() as any as RElement);
     } else {
       // console.warn('Did not find element ', localName);
-      return document.createElement(localName);
+      const el = document.createElement(localName);
+      if (this.scoped) {
+        el.setAttribute(`_ngcontent-${this.componentId}`, '');
+      }
+      return el;
     }
   }
 
@@ -147,7 +162,11 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
       return (this.getCurrentNodeAndAdvance() as any as RElement);
     } else {
       // console.warn('Did not find element ', localName, namespace);
-      return document.createElementNS(namespace, localName) as any as RElement;
+      const el = document.createElementNS(namespace, localName);
+      if (this.scoped) {
+        el.setAttribute(`_ngcontent-${this.componentId}`, '');
+      }
+      return el as any as RElement;
     }
   }
 
@@ -166,12 +185,23 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
   }
 }
 
+// Rehydration renderer factory that reuses pre-rendered DOM.
 export const RehydrationRendererFactory: RendererFactory3 = {
   createRenderer: (hostElement: RElement, rendererType: any): Renderer3 => {
     if (hostElement == null) {
       return document;
     }
-    return RehydrationRenderer.create(hostElement);
+    return RehydrationRenderer.create(hostElement, false);
+  }
+}
+
+// Same as above but with scoped styles.
+export const ScopedRehydrationRendererFactory: RendererFactory3 = {
+  createRenderer: (hostElement: RElement, rendererType: any): Renderer3 => {
+    if (hostElement == null) {
+      return document;
+    }
+    return RehydrationRenderer.create(hostElement, true);
   }
 }
 

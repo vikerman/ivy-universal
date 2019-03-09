@@ -14,13 +14,27 @@ import {
   ɵrenderComponent as renderComponent,
   ɵComponentType as ComponentType,
   Injector,
+  ViewEncapsulation,
 } from '@angular/core';
 import { merge, Observer, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ComponentDef } from '@angular/core/src/render3';
 import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer';
 
-import { RehydrationRendererFactory } from '../rehydration/rehydration_renderer';
+import { RehydrationRendererFactory, ScopedRehydrationRendererFactory } from '../rehydration/rehydration_renderer';
+
+export function createStyle(doc: Document, styles: string[], compId: number) {
+ const styleEl = doc.createElement('style');
+  styleEl.type = 'text/css';
+
+  let cssData = '';
+  for (const style of styles) {
+    cssData += style.replace(/%COMP%/g, compId.toString());
+  }
+
+  styleEl.appendChild(doc.createTextNode(cssData));
+  doc.head.appendChild(styleEl);
+}
 
 export function render<T>(
     componentType: ComponentType<T>, 
@@ -28,14 +42,23 @@ export function render<T>(
     hostFeatures: Array<(<U>(c: U, cd: ComponentDef<U>) => void)>,
     injector?: Injector,
     rendererFactory?: RendererFactory3) {
+
+  // Use the provided rendererFactory or default to the Rehydration one. Use the
+  // one with scoped CSS if that is requested.
+  const encapsulation = componentType.ngComponentDef['encapsulation']
+  const scoped =  encapsulation != null ?
+    encapsulation === ViewEncapsulation.Emulated : false;
+  if (!rendererFactory) {
+    rendererFactory = scoped ? ScopedRehydrationRendererFactory : RehydrationRendererFactory;
+  }
+
   return renderComponent(componentType, {
     host: element as any,
     hostFeatures: [
       ...hostFeatures,
       LifecycleHooksFeature,
     ],
-    // Use the provided rendererFactory or default to the Rehydration one.
-    rendererFactory: rendererFactory || RehydrationRendererFactory,
+    rendererFactory: rendererFactory,
     injector: injector,
   });
 }

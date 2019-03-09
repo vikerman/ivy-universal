@@ -11,6 +11,13 @@ import { Component, Input, ɵmarkDirty as markDirty } from '@angular/core';
   </div>
   <app-greeting [name]="name"></app-greeting>
   `,
+  styles: [
+    `
+    h3 {
+      color: blue;
+    }
+    `
+  ]
 })
 export class LinkHeader {
   @Input()

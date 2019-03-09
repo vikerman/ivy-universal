@@ -1,4 +1,5 @@
 import { RendererFactory3, ObjectOrientedRenderer3 } from '@angular/core/src/render3/interfaces/renderer';
+import { getComponentId } from '../utils/utils';
 
 // Should match
 // node_modules/domino/lib/MutationConstants.js
@@ -22,7 +23,7 @@ interface DominoMutationEvent {
 const START_COMMENT = '__start__';
 
 // Create a server renderer that adds hints about embedded templates.
-const createServerRenderer = (doc: Document): ObjectOrientedRenderer3 => {
+function createServerRenderer(doc: Document, compId?: number): ObjectOrientedRenderer3 {
   let commentIndex = 0;
   return {
     createComment: (data: string) => {
@@ -35,7 +36,13 @@ const createServerRenderer = (doc: Document): ObjectOrientedRenderer3 => {
       commentIndex++;
       return endComment;
     },
-    createElement: (tag: string) => doc.createElement(tag),
+    createElement: (tag: string) => {
+      const el = doc.createElement(tag);
+      if (compId != null) {
+        el.setAttribute(`_ngcontent-${compId}`, '');
+      }
+      return el;
+    },
     createElementNS: (namespace: string, tag: string) =>
       doc.createElementNS(namespace, tag) as any,
     createTextNode: (data: string) => doc.createTextNode(data),
@@ -43,13 +50,18 @@ const createServerRenderer = (doc: Document): ObjectOrientedRenderer3 => {
   }
 };
 
-export function getRendererFactory(doc: Document): RendererFactory3 {
+export function getRendererFactory(doc: Document, scoped: boolean): RendererFactory3 {
   return {
     createRenderer: (hostElement: any, rendererType: any) => {
       (doc as any).__current_element__ = hostElement;
+      const compId: number | undefined = (hostElement && scoped) ?
+        getComponentId(doc, hostElement.localName) : undefined;
       if (hostElement) {
         // Mark the host element as server-side rendered.
         hostElement.setAttribute('_s', '');
+        if (scoped) {
+          hostElement.setAttribute(`_nghost-${compId}`, '');
+        }
       }
       // Patch the Domino mutation handler to insert the start comment node
       // whenever the end comment node is inserted.
@@ -69,7 +81,7 @@ export function getRendererFactory(doc: Document): RendererFactory3 {
         }
       });
 
-      return createServerRenderer(doc);
+      return createServerRenderer(doc, compId);
     }
   };
 }

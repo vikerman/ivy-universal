@@ -3,8 +3,11 @@ import { Component, Input } from '@angular/core';
 @Component({
   selector: 'app-greeting',
   template: `
-  <h2>Hello {{name}}!</h2>
+  <h3>Hello {{name}}!</h3>
   `,
+  styles: [
+    `h3 { color: green; }`
+  ]
 })
 export class Greeting {
   @Input()
