@@ -6,7 +6,4 @@ ts_library(
     name = "utils",
     srcs = glob(["*.ts"]),
     tsconfig = "//src:tsconfig-app",
-    deps = [
-        #"//src/lib/utils"
-    ],
 )
