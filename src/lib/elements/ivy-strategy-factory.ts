@@ -181,7 +181,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
 
         // Get the initial Data for the component.
         const componentType = this.componentType as ComponentType<T>;
-        const inputs = getDataInputs(componentType);
+        const inputs = getDataInputs(componentType.prototype);
         const fetchPromises: Array<Promise<any>> = [];
         if (inputs) {
           inputs.forEach((value, key) => {
@@ -189,9 +189,6 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
               // Set the element property to the parsed JSON value of the
               // initialData fetch.
               element[key] = JSON.parse(resp);
-
-              // Set as attribute also so that it is serialized in the DOM.
-              element.setAttribute(key, replaceDoubleQuotesWithSingle(resp));
             }));
           });
         }
