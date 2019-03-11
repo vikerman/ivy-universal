@@ -23,7 +23,19 @@ export function registerRouterElement(
     // same component if there is no actual change.
     currentPageComponent = '';
 
+    private normalizePath(path: string) {
+      const queryIndex = path.indexOf('?');
+      path = path.substr(0, queryIndex);
+      if (path.endsWith('/')) {
+        path = path.substr(0, path.length - 1);
+      }
+      return path;
+    }
+
     private getMatchingRoute(path: string) {
+      // Ignore the query parameter and normalize path.
+      path = this.normalizePath(path);
+
       // TODO: If nothing matches, go to the 404 page.
       return routes.find(route => route.path === path) || routes[0];
     }

@@ -185,7 +185,13 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
         const fetchPromises: Array<Promise<any>> = [];
         if (inputs) {
           inputs.forEach((value, key) => {
-            fetchPromises.push(this.fetchFn(value).then(resp => {
+            let url: string;
+            if (typeof value === 'function') {
+              url = value(this.initialProperties);
+            } else {
+              url = value;
+            }
+            fetchPromises.push(this.fetchFn(url).then(resp => {
               // Set the element property to the parsed JSON value of the
               // initialData fetch.
               element[key] = JSON.parse(resp);

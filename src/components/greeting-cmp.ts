@@ -3,7 +3,7 @@ import { Counter } from '../services/counter';
 
 @Component({
   template: `
-  <h2>Hello {{name}}. Here are some links to help you start: </h2>
+  <h2>Hello {{name}}!! Here are some links to help you start: </h2>
   {{counter.current()}}
   `,
 })

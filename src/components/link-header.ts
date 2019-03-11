@@ -6,7 +6,7 @@ import { InitialData } from '../lib/photon/initial-data';
 @Component({
   template: `
   <button (click)="onClick()">Press</button>
-  <div *ngIf="nameInternal.startsWith('ivy')">
+  <div *ngIf="name.startsWith('ivy')">
     <div *ngFor="let s of strings">
       <h3 *ngIf="s.startsWith('I')">Hello</h3>{{s}}
     </div>
@@ -16,14 +16,14 @@ import { InitialData } from '../lib/photon/initial-data';
       {{item.name}} : {{item.value}}
     </div>
   </div>
-  <greeting-cmp [name]="nameInternal"></greeting-cmp>
+  <greeting-cmp [name]="name"></greeting-cmp>
   `,
 })
 export class LinkHeader {
-  @Input('name')
-  nameInternal: string;
+  @Input()
+  name: string;
 
-  @InitialData('/assets/ivy.json')
+  @InitialData(getList)
   @Input()
   list: Items;
 
@@ -37,9 +37,13 @@ export class LinkHeader {
     if (this.counter.current() > 2) {
       // After 2 clicks change the binding on the child component which causes
       // it to get fetched and rendered.
-      this.nameInternal = `ivy${this.counter.current()}`;
+      this.name = `ivy${this.counter.current()}`;
     }
     // Tell Ivy that this component state has changed.
     markDirty(this);
   }
+}
+
+export function getList(ctx: Map<string, any>) {
+  return `/assets/${ctx.get('name')}`;
 }
