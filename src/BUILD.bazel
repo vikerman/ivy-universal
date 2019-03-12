@@ -49,6 +49,7 @@ ts_library(
         "@npm//tslib",
         "//src/environments",
         "//src/lib/elements",
+        "//src/lib/ivy-route-recognizer",
         "//src/lib/tsaction",
         "//src/lib/router",
         "//src/lib/utils",

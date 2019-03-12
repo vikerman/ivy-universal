@@ -1,5 +1,5 @@
 // EVERYTHING HERE SHOULD BE AUTO-GENERATED.
-import { Route } from 'route-recognizer/dist/route-recognizer/dsl';
+import { Route } from './lib/ivy-route-recognizer/route-recognizer/dsl';
 
 import { patchAppendChildAndInsertBefore } from './lib/utils/patch-append-insert';
 import { registerCustomElement } from './lib/elements/register-custom-element';
