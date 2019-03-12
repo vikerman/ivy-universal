@@ -6,6 +6,7 @@ import { registerCustomElement } from './lib/elements/register-custom-element';
 import { EventContract } from './lib/tsaction/event_contract';
 
 import { ROUTES } from './routes';
+import { getCurrentLocation } from './lib/router/router';
 
 // TODO : Move this even earlier so that chances of missing DOM events are
 // zero/low.
@@ -53,6 +54,8 @@ function loadPage(module: string) {
       return import('./app/pages/index/index');
     case 'index-index':
       return import('./app/pages/index/index/index');
+    case 'index_id':
+      return import('./app/pages/index/_id/_id');  
     case 'about':
       return import('./app/pages/about/about');
     default:
@@ -118,6 +121,7 @@ const ELEMENTS_METADATA = [
   // PAGES
   'page-index', [],
   'page-index-index', [],
+  'page-index_id', ['params', 'params', 'queryParams', 'queryParams'],
   'page-about', [],
   // COMPONENTS
   'app-link-header', ['name', 'name'],
@@ -152,7 +156,7 @@ window.addEventListener('popstate', evt => {
 });
 
 contract.setRouterCallback(targetUrl => {
-  if (window.location.pathname !== targetUrl) {
+  if (getCurrentLocation() !== targetUrl) {
     window.history.pushState(null, '', targetUrl);
 
     lazilyLoadRouter(loadRouter, ROUTES, contract, router => {

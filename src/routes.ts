@@ -11,6 +11,10 @@ export const ROUTES = [
     },
   ],
   {
+    path: '/:id',
+    handler: 'page-index_id',
+  },
+  {
     path: '/about',
     handler: 'page-about',
   },

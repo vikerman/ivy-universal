@@ -80,7 +80,7 @@ export function registerRouterElement(
 
     public navigate(newPath?: string) {
       // Match the current path to the route config.
-      const path = newPath || window.location.pathname;
+      const path = newPath || getCurrentLocation();
 
       const matchedRoute = this.getMatchedRoute(path);
       let changed = matchedRoute.match.handler !== this.currentPageComponent;
@@ -108,7 +108,7 @@ export function registerRouterElement(
     }
 
     private routerCallback(url: string) {
-      if (url !== window.location.pathname) {
+      if (url !== getCurrentLocation()) {
         window.history.pushState({}, '', url);
         this.navigate();
       }
@@ -144,4 +144,8 @@ export function registerRouterElement(
   }
 
   ceRegistry.define(ROUTER_LOCAL_NAME, RouterElement);
+}
+
+export function getCurrentLocation() {
+  return window.location.pathname + window.location.search;
 }

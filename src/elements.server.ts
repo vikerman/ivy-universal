@@ -4,6 +4,7 @@ import { ShellComponent } from './app/shell/shell';
 import { LinkHeader } from './app/components/link-header/link-header';
 import { Index } from './app/pages/index/index';
 import { IndexIndex } from './app/pages/index/index/index';
+import { Index_Id } from './app/pages/index/_id/_id';
 import { About } from './app/pages/about/about';
 import { Greeting } from './app/components/greeting/greeting';
 
@@ -13,6 +14,7 @@ export const ELEMENTS_MAP = {
   'shell-root': ShellComponent,
   'page-index': Index,
   'page-index-index': IndexIndex,
+  'page-index_id': Index_Id,
   'page-about': About,
   'app-link-header': LinkHeader,
   'app-greeting': Greeting,
