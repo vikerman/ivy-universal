@@ -7,6 +7,7 @@ ts_library(
     srcs = glob(["*.ts"]),
     tsconfig = "//src:tsconfig-app",
     deps = [
+        "//src/lib/ivy-route-recognizer",
         "//src/lib/tsaction",
         "//src/lib/utils",
     ],

@@ -1,10 +1,10 @@
+import RouteRecognizer from '../ivy-route-recognizer/route-recognizer';
+import { Route } from '../ivy-route-recognizer/route-recognizer/dsl';
+
 import { isNode } from '../utils/utils';
 import { EventContract } from '../tsaction/event_contract';
 
-export interface RouteConfig {
-  path: string,
-  component: string;
-}
+const ROUTER_LOCAL_NAME = 'pages-router';
 
 /**
  * A lightweight custom element based router for loading 'pages'.
@@ -13,52 +13,110 @@ export function registerRouterElement(
     doc: Document, // Not global on the server
     ceRegistry: CustomElementRegistry, // Not global on the server
     initialPath: string,
-    routes: RouteConfig[],
+    routes: (Route | Route[])[],
     eventContract?: EventContract,
-    forceInitialNavigation = false,
     onLoad?: (router: {navigate: (newPath?: string) => void}) => void) {
   class RouterElement extends HTMLElement {
 
-    // Maintain currently matching page component to avoid rerendering the
-    // same component if there is no actual change.
-    currentPageComponent = '';
+    private recognizer: RouteRecognizer;
 
-    private getMatchingRoute(path: string) {
-      // TODO: If nothing matches, go to the 404 page.
-      return routes.find(route => route.path === path) || routes[0];
+    // Maintain currently matching page component adn element to avoid 
+    // rerendering the same component if there is no change to the component
+    // (but maybe only the params or queryParams).
+    private currentPageComponent = '';
+    private childElement: Element;
+    private parentRouter: Element | null = null;
+
+    // Nested router depth
+    private depth = 0;
+
+    private getMatchedRoute(path: string) {
+      const match = this.recognizer.recognize(path);
+      if (match == null || match.length < this.depth) {
+        return {
+          queryParams: {},
+          match: {
+            handler: 'code-404',
+            params: {},
+            isDynamic: false,
+          }
+        }
+      }
+      return {
+        queryParams: match.queryParams,
+        match: match[this.depth - 1],
+      }
+    }
+
+    private initRouteRecognizer() {
+      if (this.recognizer == null) {
+        this.recognizer = new RouteRecognizer();
+        for (const route of routes) {
+          if (route instanceof Array) {
+            this.recognizer.add(route);
+          } else {
+            this.recognizer.add([route]);
+          }
+        }
+      }
+    }
+
+    private initRouter() {
+      this.childElement = this.firstElementChild;
+
+      // Figure out depth of this router.
+      for (let el = this as HTMLElement; el != null; el = el.parentElement) {
+        if (el.localName === ROUTER_LOCAL_NAME) {
+          if (this.depth == 1) {
+            this.parentRouter = el;
+            el['childRouter'] = this;
+          }
+          this.depth++;
+        }
+      }
+
+      this.initRouteRecognizer();
     }
 
     public navigate(newPath?: string) {
       // Match the current path to the route config.
       const path = newPath || window.location.pathname;
 
-      const matchedRoute = this.getMatchingRoute(path);
+      const matchedRoute = this.getMatchedRoute(path);
+      let changed = matchedRoute.match.handler !== this.currentPageComponent;
+      this.currentPageComponent = matchedRoute.match.handler as string;
 
-      if (matchedRoute.component === this.currentPageComponent) {
-        // TODO: Match component as well as parameters.
-        return;
+      if (changed || this.childElement == null) {
+        // Delete all child nodes if any.
+        while (this.firstChild) {
+          this.removeChild(this.firstChild);
+        }
+
+        // Insert new child element.
+        this.childElement = doc.createElement(this.currentPageComponent);
+        this.insertAdjacentElement('afterbegin', this.childElement);
       }
 
-      this.currentPageComponent = matchedRoute.component;
+      // Set the params on the component.
+      this.childElement['params'] = matchedRoute.match.params;
+      this.childElement['queryParams'] = matchedRoute.queryParams;
 
-      // Delete all child nodes if any.
-      while (this.firstChild) {
-        this.removeChild(this.firstChild);
+      // Chain to child router's navigate.
+      if (this['childRouter'] != null) {
+        this['childRouter'].navigate(newPath);
       }
-
-      const el = doc.createElement(matchedRoute.component);
-      this.insertAdjacentElement('afterbegin', el);
     }
 
     private routerCallback(url: string) {
-      const origPath = window.location.pathname;
-      window.history.pushState({}, '', url);
-      if (origPath !== window.location.pathname) {
+      if (url !== window.location.pathname) {
+        window.history.pushState({}, '', url);
         this.navigate();
       }
     }
 
     connectedCallback() {
+      this.initRouter();
+
       if (isNode()) {
         // Server : Instantiate the page component.
         this.navigate(initialPath);
@@ -69,22 +127,21 @@ export function registerRouterElement(
         });
 
         // Router link clicks come from the event contract are handled here
-        eventContract!.setRouterCallback(this.routerCallback.bind(this));
-
-        // Initialize current page component.
-        if (forceInitialNavigation) {
-          // Flag has been set to force the current navigation on boot up.
-          // Will forcibly remove children and add the component for current route.
-          this.navigate();
-        } else {
-          this.currentPageComponent = this.getMatchingRoute(window.location.pathname).component;
+        if (this.depth == 1) {
+          eventContract!.setRouterCallback(this.routerCallback.bind(this));
         }
       }
       if (onLoad) {
         onLoad(this);
       }
     }
+
+    disconnectedCallback() {
+      if (this.parentRouter != null) {
+        this.parentRouter['childRouter'] = null;
+      }
+    }
   }
 
-  ceRegistry.define('pages-root', RouterElement);
+  ceRegistry.define(ROUTER_LOCAL_NAME, RouterElement);
 }

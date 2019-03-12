@@ -4,6 +4,7 @@ import { Component, Input } from '@angular/core';
   selector: 'app-greeting',
   template: `
   <h3>Hello {{name}}!</h3>
+  <pages-router></pages-router>
   `,
   styles: [
     `h3 { color: green; }`

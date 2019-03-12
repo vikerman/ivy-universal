@@ -7,7 +7,7 @@ import { Component } from '@angular/core';
       <a class="navlink" href='/'>Home</a>
       <a class="navlink" href='/about'>About</a>
     </div>
-    <pages-root></pages-root>
+    <pages-router></pages-router>
   `,
 })
 export class ShellComponent {

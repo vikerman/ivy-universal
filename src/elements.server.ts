@@ -3,6 +3,7 @@
 import { ShellComponent } from './app/shell/shell';
 import { LinkHeader } from './app/components/link-header/link-header';
 import { Index } from './app/pages/index/index';
+import { IndexIndex } from './app/pages/index/index/index';
 import { About } from './app/pages/about/about';
 import { Greeting } from './app/components/greeting/greeting';
 
@@ -11,6 +12,7 @@ import { Greeting } from './app/components/greeting/greeting';
 export const ELEMENTS_MAP = {
   'shell-root': ShellComponent,
   'page-index': Index,
+  'page-index-index': IndexIndex,
   'page-about': About,
   'app-link-header': LinkHeader,
   'app-greeting': Greeting,

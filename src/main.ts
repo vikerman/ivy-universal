@@ -1,11 +1,11 @@
 // EVERYTHING HERE SHOULD BE AUTO-GENERATED.
+import { Route } from 'route-recognizer/dist/route-recognizer/dsl';
 
 import { patchAppendChildAndInsertBefore } from './lib/utils/patch-append-insert';
 import { registerCustomElement } from './lib/elements/register-custom-element';
 import { EventContract } from './lib/tsaction/event_contract';
 
 import { ROUTES } from './routes';
-import { RouteConfig } from './lib/router/router';
 
 // TODO : Move this even earlier so that chances of missing DOM events are
 // zero/low.
@@ -51,6 +51,8 @@ function loadPage(module: string) {
    switch (name) {
     case 'index':
       return import('./app/pages/index/index');
+    case 'index-index':
+      return import('./app/pages/index/index/index');
     case 'about':
       return import('./app/pages/about/about');
     default:
@@ -115,6 +117,7 @@ const ELEMENTS_METADATA = [
   'shell-root', [],
   // PAGES
   'page-index', [],
+  'page-index-index', [],
   'page-about', [],
   // COMPONENTS
   'app-link-header', ['name', 'name'],
@@ -131,28 +134,33 @@ registerLazyCustomElements(ELEMENTS_METADATA);
 // Lazily load the router when a route change happens or an anchor link with relative path was clicked.
 let routerLoading = false;
 function lazilyLoadRouter(loadRouter: () => Promise<any>,
-    routes: RouteConfig[],
+    routes: (Route | Route[])[],
     contract: EventContract,
-    forceInitialNavigation = false,
-    onLoad?: (router: {navigate: (newPath?: string) => void}) => void) {
+    onLoad?: (router: {navigate: (newPath?: string) => void, depth: number}) => void) {
   if (!routerLoading) {
     routerLoading = true;
     loadRouter().then(router => {
       // Router takes over handling of route changes and router link clicks after it comes up.
-      router.registerRouterElement(document, customElements, '', routes, contract,
-        forceInitialNavigation, onLoad);
+      router.registerRouterElement(document, customElements, '', routes, contract, onLoad);
     });
   }
 }
 
-// Watch for anchor link clicks and history changes then load the full router to take over.
+// Watch for history state changes then load the full router to take over.
 window.addEventListener('popstate', evt => {
-  lazilyLoadRouter(loadRouter, ROUTES, contract, /* forceNavigation */ true);
+  lazilyLoadRouter(loadRouter, ROUTES, contract, router => router.navigate());
 });
 
 contract.setRouterCallback(targetUrl => {
-  lazilyLoadRouter(loadRouter, ROUTES, contract, /* forceNavigation */ false, router => {
+  if (window.location.pathname !== targetUrl) {
     window.history.pushState(null, '', targetUrl);
-    router.navigate(targetUrl);
-  });
+
+    lazilyLoadRouter(loadRouter, ROUTES, contract, router => {
+      if (router.depth == 1) {
+        router.navigate(targetUrl);
+      } else {
+        router.navigate();
+      }
+    });
+  }
 });

@@ -60,6 +60,9 @@ function callConnectedCallback(node: HTMLElement) {
 function callAttributeChangedCallback(
     clss: {}, target: HTMLElement, attr: {name: string},
     newValue: string|undefined) {
+  if ((clss as any)['observedAttributes'] == null) {
+    return;
+  }
   if ((clss as any)['observedAttributes'].indexOf(attr.name) > -1 &&
       typeof (target as any)['attributeChangedCallback'] === 'function') {
     /* TODO: old value is always undefined since Domino doesn't
