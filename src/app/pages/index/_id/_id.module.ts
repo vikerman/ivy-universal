@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 import { Index_Id } from './_id';
 
@@ -8,7 +7,6 @@ import { Index_Id } from './_id';
   declarations: [
     Index_Id,
   ],
-  imports: [CommonModule],
   exports: [Index_Id],
 })
 export class Index_IdModule { }

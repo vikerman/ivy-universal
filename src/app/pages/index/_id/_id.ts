@@ -4,8 +4,8 @@ import { Component, Input } from '@angular/core';
   template: `
     <button (click)="onClick()">Press</button>
     <div> id : {{id}} </div>
-    <div *ngFor="let item of queryParams | keyvalue">
-      {{item.key}}:{{item.value}}
+    <div>
+      {{getQueryParams()}}
     </div>
   `,
 })
@@ -19,4 +19,8 @@ export class Index_Id {
 
   @Input()
   queryParams: {};
+
+  getQueryParams() {
+    return Object.keys(this.queryParams).map(p => (JSON.stringify({key: p, value: this.queryParams[p]})));
+  }
 }
