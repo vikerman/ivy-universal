@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
+import { navigate } from '../../../../lib/router/router';
 
 @Component({
   template: `
     Child Route
-    <button (click)="onClick()">Press</button>
+    <button (click)="onClick()">Goto About</button>
   `,
 })
 export class IndexIndex {
   onClick() {
-    console.log('Clicked child route button');
+    navigate('/about');
   }
 }

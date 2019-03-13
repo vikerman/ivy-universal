@@ -19,7 +19,7 @@ import { patchDocument } from './lib/server/custom_elements_shim';
 // Keep the following as `require` so that webpack doesn't move it before HTMLElement is defined
 // above.
 const { registerCustomElement }  = require('./lib/elements/register-custom-element');
-const { registerRouterElement } = require('./lib/router/router');
+const { registerRouterElement } = require('./lib/router-impl/router');
 const NG_BITS = require ('./lib/elements/angular-ivy-bits');
 
 import {ROUTES} from './routes';

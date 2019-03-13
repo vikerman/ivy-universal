@@ -1,12 +1,10 @@
 // EVERYTHING HERE SHOULD BE AUTO-GENERATED.
-import { Route } from './lib/ivy-route-recognizer/route-recognizer/dsl';
-
 import { patchAppendChildAndInsertBefore } from './lib/utils/patch-append-insert';
 import { registerCustomElement } from './lib/elements/register-custom-element';
 import { EventContract } from './lib/tsaction/event_contract';
+import { initRouter } from './lib/router/router';
 
 import { ROUTES } from './routes';
-import { getCurrentLocation } from './lib/router/router';
 
 // TODO : Move this even earlier so that chances of missing DOM events are
 // zero/low.
@@ -38,10 +36,6 @@ function loadElement(module: string) {
 
 function loadShell() {
   return import('./app/shell/shell');
-}
-
-function loadRouter() {
-  return import('./lib/router/router');
 }
 
 function loadPage(module: string) {
@@ -121,7 +115,7 @@ const ELEMENTS_METADATA = [
   // PAGES
   'page-index', [],
   'page-index-index', [],
-  'page-index_id', ['params', 'params', 'queryParams', 'queryParams'],
+  'page-index_id', ['id', 'id', 'queryParams', 'queryParams'],
   'page-about', [],
   // COMPONENTS
   'app-link-header', ['name', 'name'],
@@ -135,36 +129,4 @@ initializeSeenElements();
 // Register custom elements which lazily loads the underlying component.
 registerLazyCustomElements(ELEMENTS_METADATA);
 
-// Lazily load the router when a route change happens or an anchor link with relative path was clicked.
-let routerLoading = false;
-function lazilyLoadRouter(loadRouter: () => Promise<any>,
-    routes: (Route | Route[])[],
-    contract: EventContract,
-    onLoad?: (router: {navigate: (newPath?: string) => void, depth: number}) => void) {
-  if (!routerLoading) {
-    routerLoading = true;
-    loadRouter().then(router => {
-      // Router takes over handling of route changes and router link clicks after it comes up.
-      router.registerRouterElement(document, customElements, '', routes, contract, onLoad);
-    });
-  }
-}
-
-// Watch for history state changes then load the full router to take over.
-window.addEventListener('popstate', evt => {
-  lazilyLoadRouter(loadRouter, ROUTES, contract, router => router.navigate());
-});
-
-contract.setRouterCallback(targetUrl => {
-  if (getCurrentLocation() !== targetUrl) {
-    window.history.pushState(null, '', targetUrl);
-
-    lazilyLoadRouter(loadRouter, ROUTES, contract, router => {
-      if (router.depth == 1) {
-        router.navigate(targetUrl);
-      } else {
-        router.navigate();
-      }
-    });
-  }
-});
+initRouter(ROUTES, contract);

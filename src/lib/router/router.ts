@@ -1,151 +1,85 @@
-import RouteRecognizer from '../ivy-route-recognizer/route-recognizer';
+import { EventContract } from '../tsaction/event_contract';
 import { Route } from '../ivy-route-recognizer/route-recognizer/dsl';
 
-import { isNode } from '../utils/utils';
-import { EventContract } from '../tsaction/event_contract';
+// TODO : needs some major refactoring.
 
 const ROUTER_LOCAL_NAME = 'pages-router';
 
-/**
- * A lightweight custom element based router for loading 'pages'.
- */
-export function registerRouterElement(
-    doc: Document, // Not global on the server
-    ceRegistry: CustomElementRegistry, // Not global on the server
-    initialPath: string,
-    routes: (Route | Route[])[],
-    eventContract?: EventContract,
-    onLoad?: (router: {navigate: (newPath?: string) => void}) => void) {
-  class RouterElement extends HTMLElement {
-
-    private recognizer: RouteRecognizer;
-
-    // Maintain currently matching page component adn element to avoid 
-    // rerendering the same component if there is no change to the component
-    // (but maybe only the params or queryParams).
-    private currentPageComponent = '';
-    private childElement: Element;
-    private parentRouter: Element | null = null;
-
-    // Nested router depth
-    private depth = 0;
-
-    private getMatchedRoute(path: string) {
-      const match = this.recognizer.recognize(path);
-      if (match == null || match.length < this.depth) {
-        return {
-          queryParams: {},
-          match: {
-            handler: 'code-404',
-            params: {},
-            isDynamic: false,
-          }
-        }
-      }
-      return {
-        queryParams: match.queryParams,
-        match: match[this.depth - 1],
-      }
-    }
-
-    private initRouteRecognizer() {
-      if (this.recognizer == null) {
-        this.recognizer = new RouteRecognizer();
-        for (const route of routes) {
-          if (route instanceof Array) {
-            this.recognizer.add(route);
-          } else {
-            this.recognizer.add([route]);
-          }
-        }
-      }
-    }
-
-    private initRouter() {
-      this.childElement = this.firstElementChild;
-
-      // Figure out depth of this router.
-      for (let el = this as HTMLElement; el != null; el = el.parentElement) {
-        if (el.localName === ROUTER_LOCAL_NAME) {
-          if (this.depth == 1) {
-            this.parentRouter = el;
-            el['childRouter'] = this;
-          }
-          this.depth++;
-        }
-      }
-
-      this.initRouteRecognizer();
-    }
-
-    public navigate(newPath?: string) {
-      // Match the current path to the route config.
-      const path = newPath || getCurrentLocation();
-
-      const matchedRoute = this.getMatchedRoute(path);
-      let changed = matchedRoute.match.handler !== this.currentPageComponent;
-      this.currentPageComponent = matchedRoute.match.handler as string;
-
-      if (changed || this.childElement == null) {
-        // Delete all child nodes if any.
-        while (this.firstChild) {
-          this.removeChild(this.firstChild);
-        }
-
-        // Insert new child element.
-        this.childElement = doc.createElement(this.currentPageComponent);
-        this.insertAdjacentElement('afterbegin', this.childElement);
-      }
-
-      // Set the params on the component.
-      this.childElement['params'] = matchedRoute.match.params;
-      this.childElement['queryParams'] = matchedRoute.queryParams;
-
-      // Chain to child router's navigate.
-      if (this['childRouter'] != null) {
-        this['childRouter'].navigate(newPath);
-      }
-    }
-
-    private routerCallback(url: string) {
-      if (url !== getCurrentLocation()) {
-        window.history.pushState({}, '', url);
-        this.navigate();
-      }
-    }
-
-    connectedCallback() {
-      this.initRouter();
-
-      if (isNode()) {
-        // Server : Instantiate the page component.
-        this.navigate(initialPath);
-      } else {
-        // Client: Listen for popstate and router link clicks.
-        window.addEventListener('popstate', _evt => {
-          this.navigate();
-        });
-
-        // Router link clicks come from the event contract are handled here
-        if (this.depth == 1) {
-          eventContract!.setRouterCallback(this.routerCallback.bind(this));
-        }
-      }
-      if (onLoad) {
-        onLoad(this);
-      }
-    }
-
-    disconnectedCallback() {
-      if (this.parentRouter != null) {
-        this.parentRouter['childRouter'] = null;
-      }
-    }
-  }
-
-  ceRegistry.define(ROUTER_LOCAL_NAME, RouterElement);
+function getCurrentLocation() {
+  return window.location.pathname + window.location.search;
 }
 
-export function getCurrentLocation() {
-  return window.location.pathname + window.location.search;
+function loadRouterModule() {
+  return import('../router-impl/router');
+}
+
+// Lazily load the router when a route change happens or an anchor link with relative path was clicked.
+let routerLoaded = false;
+let navigateFn: (targetUrl: string) => Promise<any> = null;
+
+function lazilyLoadRouter(loadRouter: () => Promise<any>,
+    routes: (Route | Route[])[],
+    contract: EventContract,
+    onLoad?: (router: {navigate: (newPath?: string) => void, depth: number}) => void) {
+  if (!routerLoaded) {
+    return loadRouter().then(routerModule => {
+      // Router takes over handling of route changes and router link clicks after it comes up.
+      routerModule.registerRouterElement(document, customElements, '', routes, contract, router => {
+        // Take over the imperative loader to directly navigate using the loaded router.
+        if (router.depth === 1) {
+          navigateFn = (targetUrl: string) => {
+            if (getCurrentLocation() !== targetUrl) {
+              window.history.pushState(null, '', targetUrl);
+              router.navigate(targetUrl);
+            }
+            // TODO: Wait for actual route resolution.
+            return Promise.resolve(true);
+          }
+        }
+        if (onLoad != null) {
+          onLoad(router);
+        }
+      });
+      routerLoaded = true;
+      // TODO : Return Promise to actual route resolution and not just loading code.
+    });
+  }
+}
+
+export function initRouter(ROUTES: (Route | Route[])[], contract: EventContract) {
+
+  if (document.querySelector(ROUTER_LOCAL_NAME) == null) {
+    // No routers found. Just exit.
+    return;
+  }
+
+  // Watch for history state changes then load the full router to take over.
+  window.addEventListener('popstate', evt => {
+    lazilyLoadRouter(loadRouterModule, ROUTES, contract, router => router.navigate());
+  });
+
+  // Set the function for imperative navigation.
+  navigateFn = (targetUrl) => {
+    if (getCurrentLocation() !== targetUrl) {
+      window.history.pushState(null, '', targetUrl);
+
+      return lazilyLoadRouter(loadRouterModule, ROUTES, contract, router => {
+        if (router.depth == 1) {
+          router.navigate(targetUrl);
+        } else {
+          router.navigate();
+        }
+      });
+    }
+  };
+
+  // Watch for anchor link clicks.
+  contract.setRouterCallback(navigateFn);
+}
+
+export function navigate(path: string) {
+  if (navigateFn != null) {
+    return navigateFn(path);
+  }
+  return Promise.reject('No router was found in page.');
 }
