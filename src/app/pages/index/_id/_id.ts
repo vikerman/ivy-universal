@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ɵmarkDirty as markDirty } from '@angular/core';
 
 @Component({
   template: `
     <button (click)="onClick()">Press</button>
+    <div *ngFor="let s of strings">{{s}}</div>
     <div> id : {{id}} </div>
     <div>
       {{getQueryParams()}}
@@ -10,8 +11,12 @@ import { Component, Input } from '@angular/core';
   `,
 })
 export class Index_Id {
+  strings = [];
+
   onClick() {
-    console.log('Hydrated...');
+    this.strings.push('New Line');
+    // Tell Ivy that this component state has changed.
+    markDirty(this);
   }
 
   @Input()
@@ -21,6 +26,7 @@ export class Index_Id {
   queryParams: {};
 
   getQueryParams() {
-    return Object.keys(this.queryParams).map(p => (JSON.stringify({key: p, value: this.queryParams[p]})));
+    return Object.keys(this.queryParams).map(
+      p => (JSON.stringify({key: p, value: this.queryParams[p]})));
   }
 }
