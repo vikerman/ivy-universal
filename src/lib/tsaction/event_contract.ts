@@ -34,6 +34,9 @@ export class EventContract {
   // Router callback to use when anchor links are clicked.
   private routerCallback: (url: string) => void;
 
+  // Currently replayed event.
+  private replayedEvent: Event | null = null;
+
   constructor(private container: HTMLElement, private types: string[]) { }
 
   /**
@@ -144,6 +147,10 @@ export class EventContract {
   }
 
   private processEvent(event: Event) {
+    if (event === this.replayedEvent) {
+      // Don't process replayed event again.
+      return;
+    }
     if ((event.target as Node).nodeType === Node.ELEMENT_NODE &&
         (event.target as Element).localName === 'a') {
       this.processRouterLinkClick(event);
@@ -184,7 +191,9 @@ export class EventContract {
     }
     // Replay the events in order.
     for (const eventData of data) {
+      this.replayedEvent = eventData.event;
       eventData.event.target.dispatchEvent(eventData.event);
+      this.replayedEvent = null;
     }
     // Remove the stored events for that element.
     this.buffer.delete(el);
