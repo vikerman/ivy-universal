@@ -1,5 +1,4 @@
-import { ɵComponentType as ComponentType, Injector } from '@angular/core';
-import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer';
+import { ɵComponentType as ComponentType } from '@angular/core';
 
 import { createCustomElement } from './create-custom-element';
 import { LazyIvyElementStrategyFactory } from './ivy-strategy-factory';
@@ -12,7 +11,8 @@ export function registerCustomElement<T>(
     ngBitsLoader: () => any | Promise<any>,
     tag: string,
     component: ComponentType<T>,
-    rendererFactory?: RendererFactory3,
+    // TODO: Type to RendererFactory3 once it's exposed publicly
+    rendererFactory?: any,
     moduleLoader?: (module: string) => Promise<any>,
     contract?: EventContract) {
  

@@ -17,12 +17,19 @@ import {
   ViewEncapsulation,
   EventEmitter,
 } from '@angular/core';
-import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer';
+import {ɵDomSanitizerImpl as DomSanitizerImpl} from '@angular/platform-browser';
 
 import { RehydrationRendererFactory, ScopedRehydrationRendererFactory } from '../rehydration/rehydration_renderer';
 import { merge, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NgElementStrategyEvent } from './element-strategy';
+
+let domSanitizer : DomSanitizerImpl | null = null;
+function getDomSanitizer(doc: Document) {
+  // Reuse DOM Sanitizers across requests. There is no state saved in it.
+  domSanitizer = domSanitizer || new DomSanitizerImpl(doc);
+  return  domSanitizer;
+}
 
 export function createStyle(doc: Document, styles: string[], compId: number) {
  const styleEl = doc.createElement('style');
@@ -38,11 +45,13 @@ export function createStyle(doc: Document, styles: string[], compId: number) {
 }
 
 export function render<T>(
+    doc: Document,
     componentType: ComponentType<T>, 
     element: Element,
     hostFeatures: Array<(<U>(c: U, cd: ComponentDef<U>) => void)>,
     injector?: Injector,
-    rendererFactory?: RendererFactory3) {
+    // TODO: Type to RendererFactory3 once it's exposed publicly
+    rendererFactory?: any) {
 
   // Use the provided rendererFactory or default to the Rehydration one. Use the
   // one with scoped CSS if that is requested.
@@ -61,6 +70,7 @@ export function render<T>(
     ],
     rendererFactory: rendererFactory,
     injector: injector,
+    sanitizer: getDomSanitizer(doc),
   });
 }
 

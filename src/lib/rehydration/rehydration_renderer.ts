@@ -1,4 +1,3 @@
-import { ObjectOrientedRenderer3, RElement, RComment, RText, RendererFactory3, Renderer3 } from '@angular/core/src/render3/interfaces/renderer';
 import { getComponentId } from '../utils/utils';
 
 const REHYDRATED = '__REHYDRATED__';
@@ -7,14 +6,14 @@ const TEMPLATE_END = '__T_END__'
 /**
  * A Renderer3 renderer that matches with existing DOM nodes from prerendering.
  */
-class RehydrationRenderer implements ObjectOrientedRenderer3 {
+class RehydrationRenderer {
   private current: Node | null = null;
 
   private templateMode = false;
   private templateNodes: Node[] = [];
   private componentId: number;
 
-  private constructor(private host: RElement, private scoped) {
+  private constructor(private host: any, private scoped) {
     const hostEl = (host as any as Element);
     this.current = hostEl.firstChild;
 
@@ -28,7 +27,7 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
   }
 
   private static currentRenderer?: RehydrationRenderer;
-  static create(hostElement: RElement, scoped = false) {
+  static create(hostElement: any, scoped = false) {
     if (this.currentRenderer && this.currentRenderer.host === hostElement) {
       return this.currentRenderer;
     } else {
@@ -90,7 +89,7 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
     return last;
   }
 
-  createComment(data: string): RComment {
+  createComment(data: string) {
     // Comments are used as template markers. Ex. for ngIf, ngFor blocks.
     // When a comment is matched we save all nodes for a later template
     // evaluation.
@@ -132,18 +131,18 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
 
       // Return the end comment as the matching comment.
       this.current = node;
-      return (this.getCurrentNodeAndAdvance() as RComment);
+      return (this.getCurrentNodeAndAdvance());
     } else {
       // console.warn('Did not find comment');
       return document.createComment(data);
     }
   }
 
-  createElement(localName: string): RElement {
+  createElement(localName: string) {
     if (this.current
       && this.current.nodeType === Node.ELEMENT_NODE
       && (this.current as Element).localName === localName) {
-        return (this.getCurrentNodeAndAdvance() as any as RElement);
+        return this.getCurrentNodeAndAdvance();
     } else {
       // console.warn('Did not find element ', localName);
       const el = document.createElement(localName);
@@ -154,40 +153,40 @@ class RehydrationRenderer implements ObjectOrientedRenderer3 {
     }
   }
 
-  createElementNS(namespace: string, localName: string): RElement {
+  createElementNS(namespace: string, localName: string) {
     if (this.current
       && this.current.nodeType === Node.ELEMENT_NODE
       && (this.current as Element).localName === localName
       && (this.current as Element).namespaceURI === namespace) {
-      return (this.getCurrentNodeAndAdvance() as any as RElement);
+      return this.getCurrentNodeAndAdvance();
     } else {
       // console.warn('Did not find element ', localName, namespace);
       const el = document.createElementNS(namespace, localName);
       if (this.scoped) {
         el.setAttribute(`_ngcontent-${this.componentId}`, '');
       }
-      return el as any as RElement;
+      return el;
     }
   }
 
-  createTextNode(data: string): RText {
+  createTextNode(data: string) {
     if (this.current && this.current.nodeType === Node.TEXT_NODE) {
-      return (this.getCurrentNodeAndAdvance() as RText);
+      return this.getCurrentNodeAndAdvance();
     } else {
       // console.warn('Did not find text');
       return document.createTextNode(data);
     }
   }
 
-  querySelector(selectors: string): RElement {
+  querySelector(selectors: string) {
     // TODO: Why can't Element be assigned to RElement?
     return document.querySelector(selectors) as any;
   }
 }
 
 // Rehydration renderer factory that reuses pre-rendered DOM.
-export const RehydrationRendererFactory: RendererFactory3 = {
-  createRenderer: (hostElement: RElement, rendererType: any): Renderer3 => {
+export const RehydrationRendererFactory = {
+  createRenderer: (hostElement: any, rendererType: any) => {
     if (hostElement == null) {
       return document;
     }
@@ -196,8 +195,8 @@ export const RehydrationRendererFactory: RendererFactory3 = {
 }
 
 // Same as above but with scoped styles.
-export const ScopedRehydrationRendererFactory: RendererFactory3 = {
-  createRenderer: (hostElement: RElement, rendererType: any): Renderer3 => {
+export const ScopedRehydrationRendererFactory = {
+  createRenderer: (hostElement: any, rendererType: any) => {
     if (hostElement == null) {
       return document;
     }

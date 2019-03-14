@@ -1,4 +1,3 @@
-import { RendererFactory3, ObjectOrientedRenderer3 } from '@angular/core/src/render3/interfaces/renderer';
 import { getComponentId } from '../utils/utils';
 
 // Should match
@@ -23,7 +22,7 @@ interface DominoMutationEvent {
 const START_COMMENT = '__start__';
 
 // Create a server renderer that adds hints about embedded templates.
-function createServerRenderer(doc: Document, compId?: number): ObjectOrientedRenderer3 {
+function createServerRenderer(doc: Document, compId?: number) {
   let commentIndex = 0;
   return {
     createComment: (data: string) => {
@@ -50,7 +49,7 @@ function createServerRenderer(doc: Document, compId?: number): ObjectOrientedRen
   }
 };
 
-export function getRendererFactory(doc: Document, scoped: boolean): RendererFactory3 {
+export function getRendererFactory(doc: Document, scoped: boolean) {
   return {
     createRenderer: (hostElement: any, rendererType: any) => {
       (doc as any).__current_element__ = hostElement;

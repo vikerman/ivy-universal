@@ -24,7 +24,7 @@ const NG_BITS = require ('./lib/elements/angular-ivy-bits');
 
 import {ROUTES} from './routes';
 import {ELEMENTS_MAP} from './elements.server';
-import { ComponentType } from '@angular/core/src/render3';
+import { ɵComponentType as ComponentType } from '@angular/core';
 import { ViewEncapsulation } from '@angular/core';
 
 // Enable Production mode in Ivy on server.

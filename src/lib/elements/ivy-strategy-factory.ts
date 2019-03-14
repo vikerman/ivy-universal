@@ -5,7 +5,6 @@ import {
   ɵComponentDef as ComponentDef
 } from '@angular/core';
 import { Observable } from 'rxjs';
-import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer';
 
 import { NgElementStrategy, NgElementStrategyEvent, NgElementStrategyFactory } from './element-strategy';
 import { camelToDashCase } from './utils';
@@ -21,7 +20,8 @@ export class LazyIvyElementStrategyFactory<T> implements NgElementStrategyFactor
     private doc: Document,
     private ngBitsLoader: () => Promise<any>,
     private componentType: ComponentType<T> | string,
-    private rendererFactory?: RendererFactory3,
+    // TODO: Type to RendererFactory3 once it's exposed publicly
+    private rendererFactory?: any,
     private moduleLoader?: (module: string) => Promise<any>,
     private contract?: EventContract
   ) { }
@@ -37,11 +37,13 @@ interface NgBits<T> {
   createStyle(doc: Document, styles: string[], compId: number);
 
   render<T>(
+    doc: Document,
     componentType: ComponentType<T>,
     element: Element,
     hostFeatures: Array<(<U>(c: U, cd: ComponentDef<U>) => void)>,
     injector?: Injector,
-    rendererFactory?: RendererFactory3): T;
+    // TODO: Type to RendererFactory3 once it's exposed publicly
+    rendererFactory?: any): T;
 
   markDirty(component: T): void;
 
@@ -102,7 +104,8 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
     private doc: Document,
     private ngBitsLoader: () => NgBits<T> | Promise<NgBits<T>>,
     private componentType: ComponentType<T> | string,
-    private rendererFactory?: RendererFactory3,
+    // TODO: Type to RendererFactory3 once it's exposed publicly
+    private rendererFactory?: any,
     private moduleLoader?: (module: string) => Promise<any>,
     private contract?: EventContract) {
       this.isLazy = typeof this.componentType === 'string'; 
@@ -356,7 +359,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
 
     // Do the initial rendering with a single renderComponent call.
     // This is needed not only for efficiency but also for rehydrating properly.
-    this.component = this.ngBits.render(componentType, element,
+    this.component = this.ngBits.render(this.doc, componentType, element,
         [
           // Initialize the component properties before rendering.
           this.initializeInputs.bind(this, element),
