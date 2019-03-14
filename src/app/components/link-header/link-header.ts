@@ -9,7 +9,7 @@ import { Component, Input, ɵmarkDirty as markDirty } from '@angular/core';
       <h3 *ngIf="s.startsWith('I')">Hello</h3>{{s}}
     </div>
   </div>
-  <app-greeting [name]="name"></app-greeting>
+  <app-greeting [name]="name" (update)="onUpdate()"></app-greeting>
   `,
   styles: [
     `
@@ -29,13 +29,18 @@ export class LinkHeader {
   count = 0;
 
   onClick() {
-    this.strings.push('!!!');
+    this.strings.push('Clicked!');
     if (++this.count > 2) {
       // After 2 clicks change the binding on the child component which causes
       // it to get fetched and rendered.
       this.name = `ivy${this.count}`;
     }
     // Tell Ivy that this component state has changed.
+    markDirty(this);
+  }
+
+  onUpdate() {
+    this.strings.push('Updated!');
     markDirty(this);
   }
 }

@@ -18,7 +18,7 @@ export function camelToDashCase(input: string): string {
  * Create a `CustomEvent` (even on browsers where `CustomEvent` is not a constructor).
  */
 export function createCustomEvent(doc: Document, name: string, detail: any): CustomEvent {
-  const bubbles = false;
+  const bubbles = true;
   const cancelable = false;
 
   // On IE9-11, `CustomEvent` is not a constructor.

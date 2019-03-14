@@ -8,20 +8,21 @@
  */
 
 import {
-  EventEmitter,
   ɵLifecycleHooksFeature as LifecycleHooksFeature,
   ɵmarkDirty,
   ɵrenderComponent as renderComponent,
   ɵComponentType as ComponentType,
+  ɵComponentDef as ComponentDef,
   Injector,
   ViewEncapsulation,
+  EventEmitter,
 } from '@angular/core';
-import { merge, Observer, Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { ComponentDef } from '@angular/core/src/render3';
 import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer';
 
 import { RehydrationRendererFactory, ScopedRehydrationRendererFactory } from '../rehydration/rehydration_renderer';
+import { merge, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { NgElementStrategyEvent } from './element-strategy';
 
 export function createStyle(doc: Document, styles: string[], compId: number) {
  const styleEl = doc.createElement('style');
@@ -65,22 +66,20 @@ export function render<T>(
 
 export const markDirty = ɵmarkDirty;
 
-export function initializeOutputs<T, U>(componentType: ComponentType<T>,
-    observer: Observer<U> | Subscription) {
+export function initializeOutputs<T>(
+    component: T,
+    componentType: ComponentType<T>,
+    registerEventType: (name: string) => void): 
+    Observable<NgElementStrategyEvent> {
   const outputs = Object.keys(componentType.ngComponentDef['outputs']);
   const eventEmitters = outputs.map(propName => {
-    const templateName = componentType.ngComponentDef['outputs'][propName];
+    const templateName = componentType.ngComponentDef['outputs'][propName] as string;
 
-    const emitter = this.component[propName] as EventEmitter<any>;
+    registerEventType(templateName);
+
+    const emitter = component[propName] as EventEmitter<any>;
     return emitter.pipe(map((value: any) => ({ name: templateName, value })));
   });
 
-  const events = merge(...eventEmitters);
-  if (observer != null) {
-    // Lazy loaded Element.
-    // Hook on to the existing observer.
-    return events.subscribe(this.observer);
-  } else {
-    return events;
-  }  
+  return merge(...eventEmitters);  
 }

@@ -69,7 +69,6 @@ rollup_bundle(
         "@npm//@angular/common",
         "@npm//@angular/core",
         "@npm//@angular/platform-browser",
-        "@npm//rxjs",
     ],
 )
 

@@ -13,11 +13,11 @@
  * Ivy element that can be loaded at a later time.
  */
 
-import {Injector, ɵComponentType as ComponentType} from '@angular/core';
-import {Subscription} from 'rxjs';
+import { Injector, ɵComponentType as ComponentType } from '@angular/core';
 
-import {NgElementStrategy, NgElementStrategyFactory} from './element-strategy';
-import {createCustomEvent, getComponentInputs, getDefaultAttributeToPropertyInputs} from './utils';
+import { NgElementStrategy, NgElementStrategyFactory } from './element-strategy';
+import { createCustomEvent, getComponentInputs, getDefaultAttributeToPropertyInputs } from './utils';
+import { Subscription } from 'rxjs';
 
 /**
  * Prototype for a class constructor based on an Angular component
@@ -51,11 +51,12 @@ export abstract class NgElement extends HTMLElement {
    */
   // TODO(issue/24571): remove '!'.
   protected ngElementStrategy !: NgElementStrategy;
+
   /**
    * A subscription to change, connect, and disconnect events in the custom element.
    */
   protected ngElementEventsSubscription: Subscription|null = null;
-
+  
   /**
     * Prototype for a handler that responds to a change in an observed attribute.
     * @param attrName The name of the attribute that has changed.
@@ -168,8 +169,10 @@ export function createCustomElement<P>(
         this.ngElementStrategy = strategyFactory.create();
       }
 
-      this.ngElementStrategy.connect(this);
+      this.ngElementStrategy.connect(this, this.upgradedCallback.bind(this));
+    }
 
+    upgradedCallback() {
       // Listen for events from the strategy and dispatch them as custom events
       this.ngElementEventsSubscription = this.ngElementStrategy.events.subscribe(e => {
         const customEvent = createCustomEvent(this.ownerDocument !, e.name, e.value);
@@ -181,10 +184,8 @@ export function createCustomElement<P>(
       if (this.ngElementStrategy) {
         this.ngElementStrategy.disconnect();
       }
-
-      if (this.ngElementEventsSubscription) {
+      if (this.ngElementEventsSubscription != null) {
         this.ngElementEventsSubscription.unsubscribe();
-        this.ngElementEventsSubscription = null;
       }
     }
   }

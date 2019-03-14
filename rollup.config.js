@@ -6,7 +6,8 @@ export default {
   input: './out-tsc/app/main.js',
   output: {
     dir: 'dist/rollup',
-    format: 'esm'
+    format: 'esm',
+    sourcemap: true
   },
   plugins: [
     node_resolve({module: true}),

@@ -163,6 +163,17 @@ export class EventContract {
   }
 
   /**
+   * Add custom event listeners.
+   * Called when a component that emits this event becomes active.
+   */
+  listenToCustomEvent(type: string) {
+    if (this.types.indexOf(type) == -1) {
+      this.container.addEventListener(type, this.processEvent.bind(this));
+      this.types.push(type);
+    }
+  }
+
+  /**
    * Replay all events in order stored for the given host element.
    */
   replay(el: Element) {

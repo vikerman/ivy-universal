@@ -2,9 +2,9 @@
 import {
   Injector,
   ɵComponentType as ComponentType,
+  ɵComponentDef as ComponentDef
 } from '@angular/core';
-import { Observable, Observer, Subscription } from 'rxjs';
-import { ComponentDef } from '@angular/core/src/render3';
+import { Observable } from 'rxjs';
 import { RendererFactory3 } from '@angular/core/src/render3/interfaces/renderer';
 
 import { NgElementStrategy, NgElementStrategyEvent, NgElementStrategyFactory } from './element-strategy';
@@ -14,23 +14,6 @@ import { EventContract } from '../tsaction/event_contract';
 
 /** Time in milliseconds to wait before destroying the component ref when disconnected. */
 const DESTROY_DELAY = 10;
-
-class DummyObserver<T> implements Observer<T> {
-  constructor(private cb: (t: T) => void) {}
-  next(t: T) {
-    this.cb(t);
-  }
-  complete() {}
-  error(err: any) {}
-}
-
-class MyObservable<T> {
-  constructor(private cb: (observer: Observer<T>) => void) {}
-  subscribe(o: (t: T) => void) {
-    this.cb(new DummyObserver(o));
-    return {unsubscribe: () => {}};
-  }
-}
 
 export class LazyIvyElementStrategyFactory<T> implements NgElementStrategyFactory {
 
@@ -62,8 +45,10 @@ interface NgBits<T> {
 
   markDirty(component: T): void;
 
-  initializeOutputs<T, U>(componentType: ComponentType<T>,
-    observer: Observer<U> | null) : Observable<NgElementStrategyEvent> | Subscription;
+  initializeOutputs<T>(
+    component: T,
+    componentType: ComponentType<T>,
+    registerEventType: (type: string) => void): Observable<NgElementStrategyEvent>;
 }
 
 /**
@@ -83,14 +68,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
   private isConnected = false;
 
   /** Merged stream of the component's output events. */
-  // TODO(issue/24571): remove '!'.
   events: Observable<NgElementStrategyEvent>;
-
-  /** The observer object for outputs for lazy Elements */
-  private observer: Observer<NgElementStrategyEvent> | null = null;
-
-  /** Subscription created by lazy initialization of outputs */
-  private subscription: Subscription | null = null;
 
   /**
    * Module containing Angular related bits.
@@ -104,6 +82,9 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
 
   /** Store backing Element for lazy initialization later */
   private element: HTMLElement;
+
+  /** Callback to tell the parent custom element component is fully ready */
+  private upgradedCallback: Function;
 
   /* Whether the backing component is being lazily loaded */
   private loading = false;
@@ -131,7 +112,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
    * Initializes a new component if one has not yet been created and cancels any scheduled
    * destruction.
    */
-  connect(element: HTMLElement): void {
+  connect(element: HTMLElement, upgradeCallback: () => void): void {
     if (this.destroyTimeoutRef !== null) {
       clearTimeout(this.destroyTimeoutRef);
       this.destroyTimeoutRef = null;
@@ -140,6 +121,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
 
     this.isConnected = true;
     this.element = element;
+    this.upgradedCallback = upgradeCallback;
 
     // Eagerly initialize component if ComponentType is immediately available.
     if (!this.isLazy) {
@@ -168,11 +150,6 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
           this.componentType as ComponentType<T>);
       }
     } else {
-      // Dummy initialize the events till the actual output streams are
-      // available after loading the component lazily.
-      this.events = new MyObservable<NgElementStrategyEvent>(
-        observer => {this.observer = observer;}) as any;
-
       if (this.initialProperties.get('_boot') != null || 
           !this.isServerSideRendered()) {
         // There are buffered events or just client-side rendered 
@@ -381,11 +358,6 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
     // This is needed not only for efficiency but also for rehydrating properly.
     this.component = this.ngBits.render(componentType, element,
         [
-          // Store the component instance in a property on the host element.
-          // This will be used by the nano zones to markDirty on the root
-          // component after an DOM event handler runs.
-          this.storeComponentReference.bind(this, element),
-
           // Initialize the component properties before rendering.
           this.initializeInputs.bind(this, element),
         ],
@@ -393,16 +365,17 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
         this.rendererFactory,
     );
 
-    const events = this.ngBits.initializeOutputs(componentType, this.observer);
-    if (this.events) {
-      this.subscription = events as Subscription;
-    } else {
-      this.events = events as Observable<NgElementStrategyEvent>;
-    }
-  }
+    this.events = this.ngBits.initializeOutputs(
+      this.component,
+      componentType,
+      type => {
+        if (this.contract) {
+          this.contract.listenToCustomEvent(type);
+        }
+      });
 
-  private storeComponentReference(element: HTMLElement, component: any, componentDef: ComponentDef<any>): void {
-    element['_component'] = component;
+    // Tell the parent custom element that the component has been fully loaded!
+    this.upgradedCallback();
   }
 
   /** Set any stored initial inputs on the component's properties. */
@@ -428,10 +401,6 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
           onDestroy();
         }
         this.component = null;
-      }
-      if (this.subscription) {
-        this.subscription.unsubscribe();
-        this.subscription = null;
       }
     }, DESTROY_DELAY) as any;
   }

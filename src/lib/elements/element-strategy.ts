@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+
   /**
  * @license
  * Copyright Google Inc. All Rights Reserved.
@@ -5,8 +7,6 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import {Injector} from '@angular/core';
-import {Observable} from 'rxjs';
 
 /**
  * Interface for the events emitted through the NgElementStrategy.
@@ -26,8 +26,7 @@ export interface NgElementStrategyEvent {
  */
 export interface NgElementStrategy {
   events: Observable<NgElementStrategyEvent>;
-
-  connect(element: HTMLElement): void;
+  connect(element: HTMLElement, upgradeCallback: () => void): void;
   disconnect(): void;
   getInputValue(propName: string): any;
   setInputValue(propName: string, value: string, attributeChange: boolean): void;
