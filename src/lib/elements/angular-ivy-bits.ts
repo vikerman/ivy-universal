@@ -13,9 +13,10 @@ import {
   ɵrenderComponent as renderComponent,
   ɵComponentType as ComponentType,
   ɵComponentDef as ComponentDef,
-  Injector,
   ViewEncapsulation,
   EventEmitter,
+  ɵAPP_ROOT as APP_ROOT,
+  ɵcreateInjector as createInjector,
 } from '@angular/core';
 import {ɵDomSanitizerImpl as DomSanitizerImpl} from '@angular/platform-browser';
 
@@ -29,6 +30,15 @@ function getDomSanitizer(doc: Document) {
   // Reuse DOM Sanitizers across requests. There is no state saved in it.
   domSanitizer = domSanitizer || new DomSanitizerImpl(doc);
   return  domSanitizer;
+}
+
+function getRootInjector(doc: any) {
+  if (doc['__rootInjector__'] == null) {
+    doc['__rootInjector__'] = createInjector(null, null, [
+      {provide: APP_ROOT, useValue: true}
+    ]);
+  }
+  return doc['__rootInjector__'];
 }
 
 export function createStyle(doc: Document, styles: string[], compId: number) {
@@ -49,7 +59,6 @@ export function render<T>(
     componentType: ComponentType<T>, 
     element: Element,
     hostFeatures: Array<(<U>(c: U, cd: ComponentDef<U>) => void)>,
-    injector?: Injector,
     // TODO: Type to RendererFactory3 once it's exposed publicly
     rendererFactory?: any) {
 
@@ -69,7 +78,7 @@ export function render<T>(
       LifecycleHooksFeature,
     ],
     rendererFactory: rendererFactory,
-    injector: injector,
+    injector: getRootInjector(doc),
     sanitizer: getDomSanitizer(doc),
   });
 }

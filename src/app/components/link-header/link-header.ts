@@ -1,4 +1,5 @@
 import { Component, Input, ɵmarkDirty as markDirty } from '@angular/core';
+import { Counter } from '../../services/counter';
 
 @Component({
   selector: 'app-link-header',
@@ -27,6 +28,8 @@ export class LinkHeader {
   // on server and client. 
   strings = ['Ivy', 'is', 'good'];
   count = 0;
+
+  constructor(private counter: Counter) {};
 
   onClick() {
     this.strings.push('Clicked!');
