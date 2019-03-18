@@ -20,7 +20,7 @@ export function registerCustomElement<T>(
   if (typeof component === 'function') {
     // A direct componentType was provided. Initialize that immediately.
     strategyFactory = new LazyIvyElementStrategyFactory(doc, ngBitsLoader,
-      component as any, rendererFactory, moduleLoader, contract);
+      component, rendererFactory, moduleLoader, contract);
   } else {
     // Create a custom element that lazily loads its backing component either
     // on user event or input change.

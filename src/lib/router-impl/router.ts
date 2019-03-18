@@ -87,19 +87,20 @@ export function registerRouterElement(
       const path = newPath || getCurrentLocation();
 
       const matchedRoute = this.getMatchedRoute(path);
-      let changed = matchedRoute.match.handler !== this.currentPageComponent;
       this.currentPageComponent = matchedRoute.match.handler as string;
 
-      if (changed || this.childElement == null) {
-        // Delete all child nodes if any.
-        while (this.firstChild) {
-          this.removeChild(this.firstChild);
-        }
+      // TODO: If the page component is same across routes - re-resolve initial
+      // inputs and run change detection instead of removing and adding the
+      // component?
 
-        // Insert new child element.
-        this.childElement = doc.createElement(this.currentPageComponent);
-        this.insertAdjacentElement('afterbegin', this.childElement);
+      // Delete all child nodes if any.
+      while (this.firstChild) {
+        this.removeChild(this.firstChild);
       }
+
+      // Insert new child element.
+      this.childElement = doc.createElement(this.currentPageComponent);
+      this.insertAdjacentElement('afterbegin', this.childElement);
 
       // Set the params on the component.
       for (const param of Object.keys(matchedRoute.match.params)) {

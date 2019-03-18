@@ -5,6 +5,7 @@ import { EventContract } from './lib/tsaction/event_contract';
 import { initRouter } from './lib/router/router';
 
 import { ROUTES } from './routes';
+import { registerDataCacheElement } from './lib/data-cache/element';
 
 // TODO : Move this even earlier so that chances of missing DOM events are
 // zero/low.
@@ -125,6 +126,10 @@ const ELEMENTS_METADATA = [
 // Initialize the seenElements list to setup CSS scoping properly and match
 // the scope Ids set on the server.
 initializeSeenElements();
+
+// Initialize the custom element that can add any cached data to the local
+// cache as they arrive in the DOM.
+registerDataCacheElement();
 
 // Register custom elements which lazily loads the underlying component.
 registerLazyCustomElements(ELEMENTS_METADATA);

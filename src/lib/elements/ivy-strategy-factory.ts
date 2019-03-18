@@ -13,6 +13,12 @@ import { EventContract } from '../tsaction/event_contract';
 
 /** Time in milliseconds to wait before destroying the component ref when disconnected. */
 const DESTROY_DELAY = 10;
+const PENDING_RESOLVES = '__pending_resolves__';
+const WAIT_RESOLVE = '__wait_resolve__';
+
+interface Resolver {
+  getInitialInputs?: (properties: {}) => Promise<{}>;
+}
 
 export class LazyIvyElementStrategyFactory<T> implements NgElementStrategyFactory {
 
@@ -149,8 +155,14 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
             }
           }
         }
-        this.initializeComponent(element,
-          this.componentType as ComponentType<T>);
+
+        // Resolve initial inputs.
+        const init = () => {
+          this.initializeComponent(element,
+            this.componentType as ComponentType<T>);
+        };
+        // TODO: Handle error thrown during resolve.
+        this.resolveInitialData().then(init).catch(init);
       }
     } else {
       if (this.initialProperties.get('_boot') != null || 
@@ -275,11 +287,17 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
       // Look for an exported memeber with ngComponentDef.
       const exports = Object.keys(module);
       let compType = null;
-      for (const exp of exports) {
-        // Assume there is only one exported component per module.
-        if (module[exp]['ngComponentDef'] != null) {
-          compType = module[exp];
-          break;
+      // Check if the default export is a function.
+      // Assume that is the component.
+      if (typeof exports === 'function') {
+        compType = exports;
+      } else {
+        for (const exp of exports) {
+          // Assume there is only one exported component per module.
+          if (module[exp]['ngComponentDef'] != null) {
+            compType = module[exp];
+            break;
+          }
         }
       }
 
@@ -290,42 +308,89 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
         this.isLazy = false; // Behave like non-lazy component from now on.
         this.ngBits = ngBits; // Store the ngBits reference.
 
+        // Resolve initial data from cache transferred from server.
         // Do initial rendering with initial properties so that hydration
         // can match initial state on the DOM.
-        this.initializeComponent(this.element, this.componentType);
-
-        // Signal to the event contract that this host Element is now booted
-        // and to stop buffering events.
-        if (this.contract) {
-          this.contract.boot(this.element);
-        }
-
-        // Restore new properties if any and run change detection.
-        let changed = false;
-        if (this.newProperties && this.newProperties.size > 0) {
-          for (const propName of Array.from(this.newProperties.keys())) {
-            const templateName = this.getTemplateNameFromPropertyName(propName);
-            this.component[templateName] = this.newProperties.get(propName);  
-          }
-          changed = true;
-        }
-
-        // Replay buffered events.
-        // TODO : what's the right order of restoring new properties and
-        // replaying events?
-        if (this.contract) {
-          this.contract.replay(this.element);
-        }
-
-        if (changed) {
-          this.ngBits.markDirty(this.component);
-        }
+        const init = () => this.initializeLoadedComponent();
+        this.resolveInitialData().then(init).catch(init);
       }
     }).catch(e => {
       console.error(`Failed to load ${moduleName}`, e);
     }).finally(() => {
       this.loading = false;
     });
+  }
+
+  private incrementPendingResolves() {
+    if (this.doc[PENDING_RESOLVES] == null) {
+      this.doc[PENDING_RESOLVES] = 0;
+    }
+    this.doc[PENDING_RESOLVES]++;
+  }
+
+  private decrementPendingResolves() {
+    if (--this.doc[PENDING_RESOLVES] == 0) {
+      if (this.doc[WAIT_RESOLVE] != null) {
+        this.doc[WAIT_RESOLVE]();
+      }
+    }
+  }
+
+  private resolveInitialData(): Promise<void> {
+    const compType = this.componentType as ComponentType<T>&Resolver;
+    if (compType.getInitialInputs) {
+      const props = {};
+      for (const propName of Array.from(this.initialProperties.keys())) {
+        // TODO: restrict to only declared Input() properties.
+        props[propName] = this.initialProperties.get(propName);
+      }
+      props['__doc'] = this.doc;
+      try {
+        // Set the rest of the initial properties based on property bag returned
+        // from getInitialInputs.
+        this.incrementPendingResolves();
+        return compType.getInitialInputs(props).then(newProps => {
+          this.decrementPendingResolves();
+          for (const key of Object.keys(newProps)) {
+            this.initialProperties.set(key, newProps[key]);
+          }
+        }).catch(() => {
+          this.decrementPendingResolves();
+        });
+      } catch (e) {
+        // TODO: Handle on server.
+        this.decrementPendingResolves();
+      }
+    }
+    return Promise.resolve();
+  }
+
+  private initializeLoadedComponent() {
+    this.initializeComponent(this.element, this.componentType as ComponentType<T>);
+    // Signal to the event contract that this host Element is now booted
+    // and to stop buffering events.
+    if (this.contract) {
+      this.contract.boot(this.element);
+    }
+    // Restore new properties if any and run change detection.
+    let changed = false;
+    if (this.newProperties && this.newProperties.size > 0) {
+      for (const propName of Array.from(this.newProperties.keys())) {
+        const templateName = this.getTemplateNameFromPropertyName(propName);
+        this.component[templateName] = this.newProperties.get(propName);
+      }
+      changed = true;
+      this.newProperties.clear();
+    }
+    // Replay buffered events.
+    // TODO : what's the right order of restoring new properties and
+    // replaying events?
+    if (this.contract) {
+      this.contract.replay(this.element);
+    }
+    if (changed) {
+      this.ngBits.markDirty(this.component);
+    }
   }
 
   /**
@@ -386,6 +451,9 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
     const inputs = Object.keys(componentDef['inputs']);
     inputs.forEach(prop => {
       const templateName = componentDef['inputs'][prop];
+      if (templateName == null) {
+        return;
+      }
       const value = isNode() ?
        element[prop] || this.initialProperties.get(prop) : // On the server use the properties first for initial values.
        this.initialProperties.get(prop);

@@ -33,4 +33,4 @@ ANGULAR ELEMENTS:
 - Using ComponentFactoryResolver in getComponentInputs pulls in a lot/whole of
   @angular/core.
 - Why is the observedAttribute based on internal template name?
-
+- Handle errors in resolveInitialInputs and the fetch.

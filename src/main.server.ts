@@ -15,17 +15,19 @@ import * as express from 'express';
 import { join } from 'path';
 import { getRendererFactory } from './lib/server/server_renderer_factory';
 import { patchDocument } from './lib/server/custom_elements_shim';
+import { waitForFetches, getPendingFetchCount, getFetch } from './lib/server/fetch';
 
 // Keep the following as `require` so that webpack doesn't move it before HTMLElement is defined
 // above.
 const { registerCustomElement }  = require('./lib/elements/register-custom-element');
 const { registerRouterElement } = require('./lib/router-impl/router');
-const NG_BITS = require ('./lib/elements/angular-ivy-bits');
+const NG_BITS = require('./lib/elements/angular-ivy-bits');
 
 import {ROUTES} from './routes';
 import {ELEMENTS_MAP} from './elements.server';
 import { ɵComponentType as ComponentType } from '@angular/core';
 import { ViewEncapsulation } from '@angular/core';
+import { getCache, CacheEntry } from './lib/data-cache';
 
 // Enable Production mode in Ivy on server.
 (global as any).ngDevMode = false;
@@ -33,10 +35,26 @@ import { ViewEncapsulation } from '@angular/core';
 // Express server
 const app = express();
 
-const PORT = process.env.PORT || 4200;
+const PORT = parseInt(process.env.PORT) || 4200;
 
 // User 'src' for index.html if using Bazel build.
 const DIST_FOLDER = join(process.cwd(), process.env.RUNFILES ? 'src/package' : 'dist/ivy');
+
+// Polyfill fetch in global scope.
+(global as any)['fetch'] = getFetch('localhost', PORT.toString());
+
+function waitForNextTick(): Promise<void> {
+  return new Promise((resolve, _) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+async function waitForRenderComplete(doc: Document) {
+  do {
+    await waitForFetches(doc);
+    await waitForNextTick();
+  } while (getPendingFetchCount(doc) > 0);
+}
 
 // Patch addEventListener to setup jsaction attributes.
 let actionIndex = 0;
@@ -64,11 +82,28 @@ function serializeSeenElements(doc: Document, shellEl: HTMLElement) {
     elements[key] = val;
   });
 
-  const s = doc.createElement('script');
-  s.type = 'application/json';
-  s.id = '_elements';
-  s.appendChild(doc.createTextNode(JSON.stringify(elements)));
-  shellEl.insertAdjacentElement('afterend', s);
+  const script = doc.createElement('script');
+  script.type = 'application/json';
+  script.id = '_elements';
+  script.appendChild(doc.createTextNode(JSON.stringify(elements)));
+  shellEl.insertAdjacentElement('afterend', script);
+}
+
+function serializeCachedData(doc: Document) {
+  const cache: Map<string, CacheEntry<string>> = getCache(doc);
+  if (cache.size == 0) {
+    return;
+  }
+  const cacheObj = {};
+  for (const key of Array.from(cache.keys())) {
+    cacheObj[key] = cache.get(key).value;
+  }
+  const dataEl =  doc.createElement('data-cache');
+  const script =  doc.createElement('script');
+  script.type = 'application/json';
+  script.appendChild(doc.createTextNode(JSON.stringify(cacheObj)));
+  dataEl.appendChild(script);
+  doc.body.insertAdjacentElement('beforeend', dataEl);
 }
 
 // Universal express-engine.
@@ -113,14 +148,16 @@ app.engine('html',
       const shell = doc.createElement('shell-root');
       doc.body.insertAdjacentElement('afterbegin', shell);
 
-      // Render in the next tick after all microtasks have been flushed.
-      // This is needed to make sure all the custom elements have been rendered.
-      setTimeout(() => {
+      // Wait for all outstanding fetches and rendering to complete.
+      waitForRenderComplete(doc).then(() => {
         // Add the current state of the _seenElements map.
         serializeSeenElements(doc, shell);
 
+        // Serialize cached data.
+        serializeCachedData(doc);
+
         callback(null, doc.documentElement.outerHTML);
-      }, 0);
+      });
     } catch (e) {
       callback(e);
     }
@@ -131,7 +168,8 @@ app.set('views', DIST_FOLDER);
 
 // Server static files from DIST folder.
 app.get('*.*', express.static(DIST_FOLDER, {
-  maxAge: '1y'
+  maxAge: '1y',
+  fallthrough: false
 }));
 
 // All regular routes use the Universal engine
