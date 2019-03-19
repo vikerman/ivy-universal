@@ -1,6 +1,6 @@
 import bo from '@angular-devkit/build-optimizer/src/build-optimizer/rollup-plugin';
 import terser from 'rollup-plugin-terser';
-import node_resolve from 'rollup-plugin-node-resolve';
+import node_resolve from 'rollup-plugin-node-resolve-angular';
 
 export default {
   input: './out-tsc/app/main.js',
@@ -10,7 +10,7 @@ export default {
     sourcemap: true
   },
   plugins: [
-    node_resolve({module: true}),
+    node_resolve({es2015:true, module: true}),
     bo({}),
     terser.terser({
       ecma: 6,
