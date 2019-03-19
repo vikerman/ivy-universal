@@ -1,6 +1,7 @@
 import bo from '@angular-devkit/build-optimizer/src/build-optimizer/rollup-plugin';
 import terser from 'rollup-plugin-terser';
 import node_resolve from 'rollup-plugin-node-resolve-angular';
+import visualizer from 'rollup-plugin-visualizer';
 
 export default {
   input: './out-tsc/app/main.js',
@@ -20,5 +21,6 @@ export default {
         },
       }
     }),
+    visualizer({sourcemap: true, filename: './dist/stats.html'}),
   ],
 }
