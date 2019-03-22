@@ -17,19 +17,11 @@ import {
   ViewEncapsulation,
   EventEmitter,
 } from '@angular/core';
-import {ɵDomSanitizerImpl as DomSanitizerImpl} from '@angular/platform-browser';
 
 import { RehydrationRendererFactory, ScopedRehydrationRendererFactory } from '../rehydration/rehydration_renderer';
 import { merge, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NgElementStrategyEvent } from './element-strategy';
-
-let domSanitizer : DomSanitizerImpl | null = null;
-function getDomSanitizer(doc: Document) {
-  // Reuse DOM Sanitizers across requests. There is no state saved in it.
-  domSanitizer = domSanitizer || new DomSanitizerImpl(doc);
-  return  domSanitizer;
-}
 
 export function createStyle(doc: Document, styles: string[], compId: number) {
  const styleEl = doc.createElement('style');
@@ -70,7 +62,6 @@ export function render<T>(
     ],
     rendererFactory: rendererFactory,
     injector: injector,
-    sanitizer: getDomSanitizer(doc),
   });
 }
 
