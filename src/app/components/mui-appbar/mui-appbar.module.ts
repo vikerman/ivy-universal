@@ -1,14 +1,14 @@
 import { NgModule } from '@angular/core';
-import { LinkHeader } from './link-header';
+import { MuiAppbar } from './mui-appbar';
 import { CommonModule } from '@angular/common';
 
 // Add only non-lazy references here. For lazy reference to other components
 // just directly use them in the template with the '-cmp' suffix.
 @NgModule({
   declarations: [
-    LinkHeader,
+    MuiAppbar,
   ],
-  exports: [LinkHeader],
+  exports: [MuiAppbar],
   imports: [CommonModule]
 })
-export class LinkHeaderModule {}
+export class MuiAppBarModule {}

@@ -26,10 +26,8 @@ function loadElement(module: string) {
     name = module.substr(4);
   }
   switch (name) {
-    case 'link-header':
-      return import('./app/components/link-header/link-header');
-    case 'greeting':
-      return import('./app/components/greeting/greeting');
+    case 'mui-appbar':
+      return import('./app/components/mui-appbar/mui-appbar');
     default:
       throw new Error(`Unknown component module ${module}`);
   }
@@ -47,12 +45,6 @@ function loadPage(module: string) {
    switch (name) {
     case 'index':
       return import('./app/pages/index/index');
-    case 'index-index':
-      return import('./app/pages/index/index/index');
-    case 'index_id':
-      return import('./app/pages/index/_id/_id');  
-    case 'about':
-      return import('./app/pages/about/about');
     default:
       throw new Error(`Unknown page module ${module}`);
   }
@@ -115,12 +107,8 @@ const ELEMENTS_METADATA = [
   'shell-root', [],
   // PAGES
   'page-index', [],
-  'page-index-index', [],
-  'page-index_id', ['id', 'id', 'queryParams', 'queryParams'],
-  'page-about', [],
   // COMPONENTS
-  'app-link-header', ['name', 'name'],
-  'app-greeting', ['name', 'name'],
+  'mui-appbar', [],
 ];
 
 // Initialize the seenElements list to setup CSS scoping properly and match
