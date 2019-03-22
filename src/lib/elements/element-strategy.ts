@@ -25,7 +25,7 @@ export interface NgElementStrategyEvent {
  * @publicApi
  */
 export interface NgElementStrategy {
-  events: Observable<NgElementStrategyEvent>;
+  events: Array<Observable<NgElementStrategyEvent>>;
   connect(element: HTMLElement, upgradeCallback: () => void): void;
   disconnect(): void;
   getInputValue(propName: string): any;

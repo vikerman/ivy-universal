@@ -71,9 +71,9 @@ export function initializeOutputs<T>(
     component: T,
     componentType: ComponentType<T>,
     registerEventType: (name: string) => void): 
-    Observable<NgElementStrategyEvent> {
+    Array<Observable<NgElementStrategyEvent>> {
   const outputs = Object.keys(componentType.ngComponentDef['outputs']);
-  const eventEmitters = outputs.map(propName => {
+  return outputs.map(propName => {
     const templateName = componentType.ngComponentDef['outputs'][propName] as string;
 
     registerEventType(templateName);
@@ -81,6 +81,4 @@ export function initializeOutputs<T>(
     const emitter = component[propName] as EventEmitter<any>;
     return emitter.pipe(map((value: any) => ({ name: templateName, value })));
   });
-
-  return merge(...eventEmitters);  
 }

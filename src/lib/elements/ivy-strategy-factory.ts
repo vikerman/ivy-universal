@@ -56,7 +56,7 @@ interface NgBits<T> {
   initializeOutputs<T>(
     component: T,
     componentType: ComponentType<T>,
-    registerEventType: (type: string) => void): Observable<NgElementStrategyEvent>;
+    registerEventType: (type: string) => void): Array<Observable<NgElementStrategyEvent>>;
 }
 
 /**
@@ -76,7 +76,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
   private isConnected = false;
 
   /** Merged stream of the component's output events. */
-  events: Observable<NgElementStrategyEvent>;
+  events: Array<Observable<NgElementStrategyEvent>>;
 
   /**
    * Module containing Angular related bits.

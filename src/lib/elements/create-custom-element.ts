@@ -174,10 +174,17 @@ export function createCustomElement<P>(
 
     upgradedCallback() {
       // Listen for events from the strategy and dispatch them as custom events
-      this.ngElementEventsSubscription = this.ngElementStrategy.events.subscribe(e => {
+      const callback = e => {
         const customEvent = createCustomEvent(this.ownerDocument !, e.name, e.value);
         this.dispatchEvent(customEvent);
-      });
+      };
+
+      if (this.ngElementStrategy.events.length > 0) {
+        this.ngElementEventsSubscription = this.ngElementStrategy.events[0].subscribe(callback);
+        for (let i = 1; i < this.ngElementStrategy.events.length; i++) {
+          this.ngElementEventsSubscription.add(this.ngElementStrategy.events[i].subscribe(callback));
+        }
+      }
     }
 
     disconnectedCallback(): void {
