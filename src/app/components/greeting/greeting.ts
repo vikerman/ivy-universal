@@ -1,4 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output } from '@angular/core';
+
+import { EventEmitterLite } from '../../../lib/rxjs-lite';
 
 @Component({
   selector: 'app-greeting',
@@ -16,10 +18,14 @@ export class Greeting {
   name: string;
 
   @Output()
-  update = new EventEmitter<void>();
+  updated = new EventEmitterLite<void>();
+
+  @Output()
+  update = new EventEmitterLite<void>();
 
   onClick() {
     this.update.emit();
+    this.updated.emit();
   }
 
   constructor() {}

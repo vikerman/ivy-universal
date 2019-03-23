@@ -9,23 +9,13 @@ import { Observable } from 'rxjs';
  */
 
 /**
- * Interface for the events emitted through the NgElementStrategy.
- *
- * @publicApi
- */
-export interface NgElementStrategyEvent {
-  name: string;
-  value: any;
-}
-
-/**
  * Underlying strategy used by the NgElement to create/destroy the component and react to input
  * changes.
  *
  * @publicApi
  */
 export interface NgElementStrategy {
-  events: Array<Observable<NgElementStrategyEvent>>;
+  events: Array<{templateName: string, output: Observable<any>}>;
   connect(element: HTMLElement, upgradeCallback: () => void): void;
   disconnect(): void;
   getInputValue(propName: string): any;

@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { NgElementStrategy, NgElementStrategyEvent, NgElementStrategyFactory } from './element-strategy';
+import { NgElementStrategy, NgElementStrategyFactory } from './element-strategy';
 import { camelToDashCase } from './utils';
 import { isNode, getComponentId } from '../utils/utils';
 import { EventContract } from '../tsaction/event_contract';
@@ -56,7 +56,7 @@ interface NgBits<T> {
   initializeOutputs<T>(
     component: T,
     componentType: ComponentType<T>,
-    registerEventType: (type: string) => void): Array<Observable<NgElementStrategyEvent>>;
+    registerEventType: (type: string) => void): Array<{templateName: string, output: any}>;
 }
 
 /**
@@ -76,7 +76,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
   private isConnected = false;
 
   /** Merged stream of the component's output events. */
-  events: Array<Observable<NgElementStrategyEvent>>;
+  events: Array<{templateName: string, output: Observable<any>}>;
 
   /**
    * Module containing Angular related bits.

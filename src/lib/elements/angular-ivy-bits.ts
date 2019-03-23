@@ -15,13 +15,9 @@ import {
   ɵComponentDef as ComponentDef,
   Injector,
   ViewEncapsulation,
-  EventEmitter,
 } from '@angular/core';
 
 import { RehydrationRendererFactory, ScopedRehydrationRendererFactory } from '../rehydration/rehydration_renderer';
-import { merge, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { NgElementStrategyEvent } from './element-strategy';
 
 export function createStyle(doc: Document, styles: string[], compId: number) {
  const styleEl = doc.createElement('style');
@@ -70,15 +66,13 @@ export const markDirty = ɵmarkDirty;
 export function initializeOutputs<T>(
     component: T,
     componentType: ComponentType<T>,
-    registerEventType: (name: string) => void): 
-    Array<Observable<NgElementStrategyEvent>> {
+    registerEventType: (name: string) => void) {
   const outputs = Object.keys(componentType.ngComponentDef['outputs']);
   return outputs.map(propName => {
     const templateName = componentType.ngComponentDef['outputs'][propName] as string;
 
     registerEventType(templateName);
 
-    const emitter = component[propName] as EventEmitter<any>;
-    return emitter.pipe(map((value: any) => ({ name: templateName, value })));
+    return {templateName, output: component[propName]};
   });
 }
