@@ -11,11 +11,24 @@ export default {
     sourcemap: true
   },
   plugins: [
-    node_resolve({es2015:true, module: true}),
-    bo({}),
+    node_resolve({
+      es2015:true,
+      module: true,
+      jsnext: true,
+      main: true,
+    }),
+    bo({
+      sideEffectFreeModules: [
+        '@angular/core',
+        '@angular/common',
+        'rxjs'
+      ]
+    }),
     terser.terser({
       ecma: 6,
       compress: {
+        pure_getters: true,
+        passes: 3,
         global_defs: {
           ngDevMode: false,
         },
