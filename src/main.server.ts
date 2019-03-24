@@ -12,6 +12,7 @@ import * as domino from 'ivy-domino';
 Object.assign(global, (domino as any).impl);
 
 import * as express from 'express';
+import * as compression from 'compression';
 import { join } from 'path';
 import { getRendererFactory } from './lib/server/server_renderer_factory';
 import { patchDocument } from './lib/server/custom_elements_shim';
@@ -34,6 +35,7 @@ import { getCache, CacheEntry } from './lib/data-cache';
 
 // Express server
 const app = express();
+app.use(compression());
 
 const PORT = parseInt(process.env.PORT) || 4200;
 
