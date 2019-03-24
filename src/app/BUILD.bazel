@@ -1,5 +1,4 @@
 load("@npm_angular_bazel//:index.bzl", "ng_module")
-load("@npm_angular_bazel//src:ng_rollup_bundle.bzl", "ng_rollup_bundle")
 
 package(default_visibility=["//:__subpackages__"])
 
@@ -10,6 +9,8 @@ ng_module(
     type_check = False,
     deps = [
         "//src/lib/router",
+        "//src/lib/runtime",
+        "//src/lib/rxjs-lite",
         "@npm//@angular/core",
         "@npm//@angular/common",
     ],

@@ -3,13 +3,11 @@ load("@npm_bazel_typescript//:defs.bzl", "ts_library")
 package(default_visibility=["//:__subpackages__"])
 
 ts_library(
-    name = "server",
+    name = "runtime",
     srcs = glob(["*.ts"]),
-    tsconfig = "//src:tsconfig-server",
+    tsconfig = "//src:tsconfig-app",
     deps = [
+        "//src/lib/data-cache",
         "//src/lib/utils",
-        "@npm//node-fetch",
-        "@npm//@types",
-        "@npm//@angular/core",
     ],
 )
