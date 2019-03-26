@@ -7,8 +7,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 # (you can check https://github.com/bazelbuild/rules_nodejs for a newer release than this)
 http_archive(
     name = "build_bazel_rules_nodejs",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/0.27.4/rules_nodejs-0.27.4.tar.gz"],
-    sha256 = "251a023b6c5c5c97db1bfe24652dc19dad05f4da68f8e1821d92d911fa3f4ef4",
+    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/0.27.8/rules_nodejs-0.27.8.tar.gz"],
 )
 
 #local_repository(

@@ -79,11 +79,12 @@ web_package(
     name = "package",
     index_html = "index.html",
     assets = [
-        ":bundle.min.mjs",
+        ":bundle.min.es2015.js",
         ":styles.css"
     ],
     data = [
         ":bundle",
+        "//src/assets",
     ],
 )
 

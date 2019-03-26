@@ -1,0 +1,7 @@
+package(default_visibility=["//:__subpackages__"])
+
+filegroup(
+    name = "assets",
+    srcs = glob(["*.*"],
+                exclude = ["BUILD.bazel"]),
+)
