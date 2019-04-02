@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+const fetch = require('node-fetch').default;
 
 const PENDING_RESOLVES = '__pending_resolves__';
 const WAIT_RESOLVE = '__wait_resolve__';

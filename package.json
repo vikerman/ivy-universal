@@ -11,7 +11,8 @@
     "serve:prod": "node dist/server/main.js",
     "start:prod": "npm run build:prod && npm run serve:prod",
     "build": "npm run build:dev",
-    "start": "DEV_MODE=1 node ./scripts/watch.js",
+    "dev": "DEV_MODE=1 node ./scripts/watch.js",
+    "start": "node dist/server/main.js",
     "serve": "npm run start"
   },
   "private": true,
