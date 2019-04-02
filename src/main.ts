@@ -122,7 +122,7 @@ const ELEMENTS_METADATA = [
   'page-shipping', [],
   // COMPONENTS
   'app-product-list', [],
-  'app-product-alerts', ['product', 'product'],
+  'app-product-alerts', ['id', 'id'],
   'app-product-details', ['id', 'id'],
 ];
 

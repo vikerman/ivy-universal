@@ -19,7 +19,7 @@ import { PRODUCTS } from '../../shared/products';
       Share
     </button>
     
-    <app-product-alerts [product]="product" (notify)="onNotify()">
+    <app-product-alerts [id]="productId" (notify)="onNotify()">
     </app-product-alerts>
   </div>
   `,
