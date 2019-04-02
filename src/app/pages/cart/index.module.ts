@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
-import { IndexIndex } from './index';
+import { Cart } from './index';
 
 // Add only non-lazy references here.
 @NgModule({
   declarations: [
-    IndexIndex,
+    Cart,
   ],
-  exports: [IndexIndex],
+  exports: [Cart],
 })
-export class IndexModule { }
+export class CartModule { }

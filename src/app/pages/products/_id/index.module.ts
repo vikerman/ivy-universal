@@ -1,14 +1,13 @@
 import { NgModule } from '@angular/core';
-
-import { Index_Id } from './_id';
+import { Products_id } from './index';
 import { CommonModule } from '@angular/common';
 
 // Add only non-lazy references here.
 @NgModule({
   declarations: [
-    Index_Id,
+    Products_id,
   ],
   imports: [CommonModule],
-  exports: [Index_Id],
+  exports: [Products_id],
 })
-export class Index_IdModule { }
+export class Products_idModule { }

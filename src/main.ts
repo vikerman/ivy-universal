@@ -26,10 +26,12 @@ function loadElement(module: string) {
     name = module.substr(4);
   }
   switch (name) {
-    case 'link-header':
-      return import('./app/components/link-header/link-header');
-    case 'greeting':
-      return import('./app/components/greeting/greeting');
+    case 'product-list':
+      return import('./app/components/product-list/product-list');
+    case 'product-alerts':
+      return import('./app/components/product-alerts/product-alerts');
+    case 'product-details':
+      return import('./app/components/product-details/product-details');
     default:
       throw new Error(`Unknown component module ${module}`);
   }
@@ -47,12 +49,12 @@ function loadPage(module: string) {
    switch (name) {
     case 'index':
       return import('./app/pages/index/index');
-    case 'index-index':
-      return import('./app/pages/index/index/index');
-    case 'index_id':
-      return import('./app/pages/index/_id/_id');  
-    case 'about':
-      return import('./app/pages/about/about');
+    case 'products-id':
+      return import('./app/pages/products/_id/index');  
+    case 'cart':
+      return import('./app/pages/cart/index');  
+    case 'shipping':
+      return import('./app/pages/shipping/index');  
     default:
       throw new Error(`Unknown page module ${module}`);
   }
@@ -115,12 +117,13 @@ const ELEMENTS_METADATA = [
   'shell-root', [],
   // PAGES
   'page-index', [],
-  'page-index-index', [],
-  'page-index_id', ['id', 'id', 'queryParams', 'queryParams'],
-  'page-about', [],
+  'page-products-id', ['id', 'id'],
+  'page-cart', [],
+  'page-shipping', [],
   // COMPONENTS
-  'app-link-header', ['name', 'name'],
-  'app-greeting', ['name', 'name'],
+  'app-product-list', [],
+  'app-product-alerts', ['product', 'product'],
+  'app-product-details', ['id', 'id'],
 ];
 
 // Initialize the seenElements list to setup CSS scoping properly and match
