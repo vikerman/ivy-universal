@@ -8,12 +8,10 @@
     "e2e": "ng e2e",
     "build:dev": "ng build --aot && ng run ivy:server",
     "build:prod": "ng build --prod && ng run ivy:server:production --bundle-dependencies all",
-    "serve:prod": "node dist/server/main.js",
-    "start:prod": "npm run build:prod && npm run serve:prod",
-    "build": "npm run build:dev",
+    "serve": "node dist/server/main.js",
+    "build": "npm run build:prod",
     "dev": "DEV_MODE=1 node ./scripts/watch.js",
-    "start": "node dist/server/main.js",
-    "serve": "npm run start"
+    "start": "npm run build:prod && npm run serve"
   },
   "private": true,
   "dependencies": {
