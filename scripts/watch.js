@@ -44,7 +44,7 @@ serverBuild.on('exit', (code) => {
 });
 
 function runNodeMon() {
-  let nodemon = spawn('nodemon', ['--watch', 'dist/server', 'dist/server/main.js']);
+  let nodemon = spawn('nodemon', ['--watch', 'dist/ivy', '--watch', 'dist/server', 'dist/server/main.js']);
 
   // Sent livereload whenever the Node expres server is listening on the port.
   nodemon.stdout.on('data', (data) => {
