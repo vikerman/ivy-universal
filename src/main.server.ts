@@ -77,6 +77,17 @@ function patchedAddEventListener(type, listener, options) {
 const oldEventListener = Node.prototype.addEventListener;
 Node.prototype.addEventListener = patchedAddEventListener;
 
+export function escapeHtml(text: string): string {
+  const escapedText: {[k: string]: string} = {
+    '&': '&a;',
+    '"': '&q;',
+    '\'': '&s;',
+    '<': '&l;',
+    '>': '&g;',
+  };
+  return text.replace(/[&"'<>]/g, s => escapedText[s]);
+}
+
 function serializeSeenElements(doc: Document, shellEl: HTMLElement) {
   const elements = {};
   const d: Document & {_seenElements: Map<string, number>} = doc as any;
@@ -103,7 +114,7 @@ function serializeCachedData(doc: Document) {
   const dataEl =  doc.createElement('data-cache');
   const script =  doc.createElement('script');
   script.type = 'application/json';
-  script.appendChild(doc.createTextNode(JSON.stringify(cacheObj)));
+  script.appendChild(doc.createTextNode(escapeHtml(JSON.stringify(cacheObj))));
   dataEl.appendChild(script);
   doc.body.insertAdjacentElement('beforeend', dataEl);
 }
