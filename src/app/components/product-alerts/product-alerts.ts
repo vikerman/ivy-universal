@@ -1,5 +1,6 @@
 import { Component, Input, Output, OnInit } from '@angular/core';
 import { PRODUCTS, Product } from '../../shared/products';
+import { EventEmitterLite } from '../../../lib/rxjs-lite';
 
 @Component({
   template: `
@@ -10,6 +11,8 @@ import { PRODUCTS, Product } from '../../shared/products';
 })
 export class ProductAlerts  implements OnInit {
   @Input() id: number;
+
+  @Output() notify = new EventEmitterLite<void>();
 
   product: Product;
 
