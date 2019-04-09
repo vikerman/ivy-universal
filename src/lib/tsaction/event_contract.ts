@@ -13,6 +13,15 @@ interface EventData {
   action: string;
 }
 
+function getAnchorParent(target: Node): HTMLElement | null {
+  for (let node = target; node != document.body; node = node.parentNode) {
+    if ((node.nodeType === Node.ELEMENT_NODE) && ((node as HTMLElement).localName === 'a')) {
+      return node as HTMLElement;
+    }
+  }
+  return null;
+}
+
 /**
  * A very simplified version of https://github.com/google/jsaction.
  * (And hence also a lot smaller).
@@ -99,9 +108,9 @@ export class EventContract {
     return null;
   }
 
-  private processRouterLinkClick(event: Event) {
+  private processRouterLinkClick(anchor: HTMLElement, event: Event) {
     // Get the target link and check whether it's absolute.
-    const targetLink = (event.target as HTMLAnchorElement).getAttribute('href');
+    const targetLink = anchor.getAttribute('href');
     // TODO: Replace with a proper check.
     const isAbsolute = targetLink.startsWith('http://') || targetLink.startsWith('https://');
     if (this.routerCallback && !!targetLink && !isAbsolute) {
@@ -151,9 +160,9 @@ export class EventContract {
       // Don't process replayed event again.
       return;
     }
-    if ((event.target as Node).nodeType === Node.ELEMENT_NODE &&
-        (event.target as Element).localName === 'a') {
-      this.processRouterLinkClick(event);
+    const anchor = getAnchorParent(event.target as Node);
+    if (anchor != null) {
+      this.processRouterLinkClick(anchor, event);
     }
     else {
       this.bufferEvent(event);
