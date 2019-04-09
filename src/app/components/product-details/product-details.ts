@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { PRODUCTS } from '../../shared/products';
+import { PRODUCTS, Product } from '../../shared/products';
 
 @Component({
   template: `
@@ -16,7 +16,7 @@ import { PRODUCTS } from '../../shared/products';
 export class ProductDetails {
   @Input() id: number;
 
-  product: typeof PRODUCTS[0];
+  product: Product;
 
   ngOnInit() {
     this.product = PRODUCTS[this.id];
