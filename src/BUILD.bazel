@@ -80,7 +80,8 @@ web_package(
     index_html = "index.html",
     assets = [
         ":bundle.min.es2015.js",
-        ":styles.css"
+        ":styles.css",
+        ":favicon.ico",
     ],
     data = [
         ":bundle",

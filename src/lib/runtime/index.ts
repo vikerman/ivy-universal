@@ -16,6 +16,7 @@ export async function fetchInitialData(context: {}, url: string): Promise<string
       return await getCachedData(context['__doc'], url);
     } catch (e) {
       // Fallback to just fetching the data.
+      return await (await fetch(url)).text();
     }
   }
 

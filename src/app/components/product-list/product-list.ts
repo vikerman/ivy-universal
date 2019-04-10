@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { PRODUCTS } from '../../shared/products';
+import { Component, Input } from '@angular/core';
+import { Product, getProducts } from '../../shared/products';
 
 @Component({
   template: `
@@ -19,13 +19,14 @@ import { PRODUCTS } from '../../shared/products';
       Share
     </button>
     
-    <app-product-alerts [id]="productId" (notify)="onNotify()">
+    <app-product-alerts [price]="product.price" (notify)="onNotify()">
     </app-product-alerts>
   </div>
   `,
 })
 export class ProductList {
-  products = PRODUCTS;
+  @Input()
+  products: Product[];
 
   share() {
     window.alert('The product has been shared!');
@@ -34,4 +35,7 @@ export class ProductList {
   onNotify() {
     window.alert('You will be notified when the product goes on sale');
   }
+
+  // Initial data.
+  static getInitialInputs = getProducts;
 }

@@ -1,5 +1,5 @@
-import { Component, Input } from '@angular/core';
-import { PRODUCTS, Product } from '../../shared/products';
+import { Component, Input, OnInit } from '@angular/core';
+import { Product, getProducts } from '../../shared/products';
 
 @Component({
   template: `
@@ -13,14 +13,20 @@ import { PRODUCTS, Product } from '../../shared/products';
   <button (click)="addToCart()">Buy</button>
   `,
 })
-export class ProductDetails {
+export class ProductDetails implements OnInit {
   @Input() id: number;
+
+  // Resolved input
+  @Input() products: Product[];
 
   product: Product;
 
-  ngOnInit() {
-    this.product = PRODUCTS[this.id];
+  ngOnInit(): void {
+    this.product = this.products[this.id];
   }
+
+  // Initial data.
+  static getInitialInputs = getProducts;
 
   addToCart() {
     window.alert('Your product has been added to the cart!');

@@ -53,8 +53,6 @@ export function getCachedData(doc: Document, url: string): Promise<string> {
   if (cache.has(url)) {
     entry = cache.get(url);
     if (entry.value != null) {
-      // Delete the cached value after single use.
-      cache.delete(url);
       return Promise.resolve(entry.value);
     }
   }
