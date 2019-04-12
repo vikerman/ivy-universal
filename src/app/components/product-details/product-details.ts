@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Product, getProducts } from '../../shared/products';
+import { Product } from '../../shared/products';
+import { InitialData } from '../../../lib/runtime';
 
 @Component({
   template: `
@@ -16,7 +17,7 @@ import { Product, getProducts } from '../../shared/products';
 export class ProductDetails implements OnInit {
   @Input() id: number;
 
-  // Resolved input
+  @InitialData('/assets/products.json')
   @Input() products: Product[];
 
   product: Product;
@@ -24,9 +25,6 @@ export class ProductDetails implements OnInit {
   ngOnInit(): void {
     this.product = this.products[this.id];
   }
-
-  // Initial data.
-  static getInitialInputs = getProducts;
 
   addToCart() {
     window.alert('Your product has been added to the cart!');

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { PartialInputs, fetchInitialData } from '../../../lib/runtime';
+import { InitialData } from '../../../lib/runtime';
 
 @Component({
   template: `
@@ -12,12 +12,7 @@ import { PartialInputs, fetchInitialData } from '../../../lib/runtime';
   `,
 })
 export class Shipping {
+  @InitialData(`/assets/shipping.json`)
   @Input()
   shippingCosts: Array<{type: string, price: number}>;
-
-  static async getInitialInputs(context: PartialInputs<Shipping>)
-  {
-    const data = await fetchInitialData(context, `/assets/shipping.json`);
-    return {shippingCosts: JSON.parse(data)};
-  }
 }

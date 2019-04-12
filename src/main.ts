@@ -121,7 +121,7 @@ const ELEMENTS_METADATA = [
   'page-cart', [],
   'page-shipping', [],
   // COMPONENTS
-  'app-product-list', [],
+  'app-product-list', ['category', 'category'],
   'app-product-alerts', ['price', 'price'],
   'app-product-details', ['id', 'id'],
 ];

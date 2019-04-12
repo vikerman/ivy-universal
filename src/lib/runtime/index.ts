@@ -5,7 +5,7 @@ export type PartialInputs<T> = {
   readonly [P in keyof T]?: T[P] extends Function ? never : T[P];
 };
 
-export async function fetchInitialData(context: {}, url: string): Promise<string> {
+async function fetchInitialData(context: {}, url: string): Promise<string> {
   if (context['__doc'] == null) {
     return Promise.reject('Invalid context object passed to fetchInitialData');
   }
@@ -34,4 +34,30 @@ export async function fetchInitialData(context: {}, url: string): Promise<string
   }
 
   return body;
+}
+
+/** Private symbol */
+export const RESOLVERS = '__resolvers__';
+
+type ResolverFn = (ctx: {}) => Promise<{}>;
+
+/**
+ * Decorator to create a resolver that fetches initial data.
+ */
+export function InitialData(url: ((ctx: {}) => string) | string) {
+  return (target: any, propertyKey: string) => {
+    const resolvers: Map<string, ResolverFn> = target[RESOLVERS]
+      || new Map<string, string>();
+    const resolver = (ctx: {}) => {
+      return fetchInitialData(ctx, typeof url === 'string' ? url : url(ctx)).then(text => {
+        try { 
+          return JSON.parse(text);
+        } catch (e) {
+          return text;
+        }
+      })
+    };
+    resolvers.set(propertyKey, resolver);
+    target.constructor[RESOLVERS] = resolvers;
+  }
 }

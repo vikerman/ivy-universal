@@ -10,6 +10,7 @@ import { NgElementStrategy, NgElementStrategyFactory } from './element-strategy'
 import { camelToDashCase } from './utils';
 import { isNode, getComponentId } from '../utils/utils';
 import { EventContract } from '../tsaction/event_contract';
+import { RESOLVERS } from '../runtime';
 
 /** Time in milliseconds to wait before destroying the component ref when disconnected. */
 const DESTROY_DELAY = 10;
@@ -162,7 +163,9 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
             this.componentType as ComponentType<T>);
         };
         // TODO: Handle error thrown during resolve.
-        this.resolveInitialData().then(init).catch(init);
+        // Run in the next tick so as to let attributes be initialized when
+        // loading on the client.
+        this.runResolvers().then(init).catch(init);
       }
     } else {
       if (this.initialProperties.get('_boot') != null || 
@@ -312,7 +315,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
         // Do initial rendering with initial properties so that hydration
         // can match initial state on the DOM.
         const init = () => this.initializeLoadedComponent();
-        this.resolveInitialData().then(init).catch(init);
+        this.runResolvers().then(init).catch(init);
       }
     }).catch(e => {
       console.error(`Failed to load ${moduleName}`, e);
@@ -336,31 +339,33 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
     }
   }
 
-  private resolveInitialData(): Promise<void> {
+  private runResolvers(): Promise<{}|void> {
     const compType = this.componentType as ComponentType<T>&Resolver;
-    if (compType.getInitialInputs) {
+    const resolvers: Map<string, (ctx: {}) => Promise<{}>> = compType[RESOLVERS];
+    if (resolvers) {
       const props = {};
-      for (const propName of Array.from(this.initialProperties.keys())) {
-        // TODO: restrict to only declared Input() properties.
-        props[propName] = this.initialProperties.get(propName);
+      for (const propName of Object.keys(compType.ngComponentDef['inputs'])) {
+        props[propName] = this.element[propName] || this.initialProperties.get(propName);
       }
       props['__doc'] = this.doc;
-      try {
-        // Set the rest of the initial properties based on property bag returned
-        // from getInitialInputs.
-        this.incrementPendingResolves();
-        return compType.getInitialInputs(props).then(newProps => {
+      let promises = [] as Array<Promise<void>>;
+      for (const resolver of Array.from(resolvers.keys())) {
+        try {
+          // Set the rest of the initial properties based on property bag returned
+          // from getInitialInputs.
+          this.incrementPendingResolves();
+          promises.push(resolvers.get(resolver)({...props}).then(value => {
+            this.decrementPendingResolves();
+            this.initialProperties.set(resolver, value);
+          }).catch(() => {
+            this.decrementPendingResolves();
+          }));
+        } catch (e) {
+          // TODO: Handle on server.
           this.decrementPendingResolves();
-          for (const key of Object.keys(newProps)) {
-            this.initialProperties.set(key, newProps[key]);
-          }
-        }).catch(() => {
-          this.decrementPendingResolves();
-        });
-      } catch (e) {
-        // TODO: Handle on server.
-        this.decrementPendingResolves();
+        }
       }
+      return Promise.all(promises);
     }
     return Promise.resolve();
   }

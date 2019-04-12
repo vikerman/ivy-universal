@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { Product, getProducts } from '../../shared/products';
+import { Product } from '../../shared/products';
+import { InitialData, PartialInputs } from '../../../lib/runtime';
 
 @Component({
   template: `
@@ -26,6 +27,10 @@ import { Product, getProducts } from '../../shared/products';
 })
 export class ProductList {
   @Input()
+  category: string;
+
+  @InitialData((ctx: PartialInputs<ProductList>) => `/assets/${ctx.category}.json`)
+  @Input()
   products: Product[];
 
   share() {
@@ -35,7 +40,4 @@ export class ProductList {
   onNotify() {
     window.alert('You will be notified when the product goes on sale');
   }
-
-  // Initial data.
-  static getInitialInputs = getProducts;
 }
