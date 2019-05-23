@@ -4,7 +4,7 @@ import node_resolve from 'rollup-plugin-node-resolve-angular';
 import visualizer from 'rollup-plugin-visualizer';
 
 export default {
-  input: './out-tsc/app/main.js',
+  input: './out-tsc/app/src/main.js',
   output: {
     dir: 'dist/rollup',
     format: 'esm',
