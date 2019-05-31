@@ -1,6 +1,7 @@
 GENERAL:
 - Add LICENSE
 - Turn on strict flags in tsconfig
+- Turn on property renaming. Reduces Angular chunk size from 48K to 40K.
 
 IVY:
 - Why is RElement not assignable to Element and vice versa?
@@ -23,9 +24,6 @@ ANGULAR ELEMENTS:
   renderComponent so that rehydration is possible.
 - Let the IvyStrategy take in optional Renderer3Factory as a parameter so that
   it can be reused on the server.
-- Angular Elements pulls in ComponentNgElementStrategyFactory by default. Should
-  not be needed for Ivy elements and save some bytes. Currently Angular Elements
-  is 20 KB. Could be smaller.
 - Need a way to statically check lazy Elements usage(currently turned off) - 
   whether the custom element name and properties are valid.
 - Changed the base createCustomElement to let the strategy differentiate between
