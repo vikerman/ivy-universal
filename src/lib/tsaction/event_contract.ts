@@ -122,7 +122,7 @@ export class EventContract {
     // else router is not active or URL is absolute. Just do a normal server side navigation.
   }
 
-  private bufferEvent(event: Event) {
+  bufferEvent(event: Event) {
     const eventData = this.getMatchingTsActionElement(event);
     if (eventData) {
       const existing = this.buffer.get(eventData.host);

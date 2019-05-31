@@ -1,6 +1,4 @@
-import { Observable } from 'rxjs';
-
-  /**
+/**
  * @license
  * Copyright Google Inc. All Rights Reserved.
  *
@@ -15,8 +13,7 @@ import { Observable } from 'rxjs';
  * @publicApi
  */
 export interface NgElementStrategy {
-  events: Array<{templateName: string, output: Observable<any>}>;
-  connect(element: HTMLElement, upgradeCallback: () => void): void;
+  connect(element: HTMLElement): void;
   disconnect(): void;
   getInputValue(propName: string): any;
   setInputValue(propName: string, value: string, attributeChange: boolean): void;

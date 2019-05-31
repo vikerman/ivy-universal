@@ -47,18 +47,18 @@ export function setCachedData(doc: Document, url: string, text: string) {
 /**
  * Get cached data or return a Promise that is resolved when the data is set.
  */
-export function getCachedData(doc: Document, url: string): Promise<string> {
+export function getCachedData(doc: Document, key: string): Promise<string> {
   const cache = getCache(doc);
   let entry: CacheEntry<string>|null = null;
-  if (cache.has(url)) {
-    entry = cache.get(url);
+  if (cache.has(key)) {
+    entry = cache.get(key);
     if (entry.value != null) {
       return Promise.resolve(entry.value);
     }
   }
   else {
     entry = {waiters: []};
-    cache.set(url, entry);
+    cache.set(key, entry);
   }
   if (doc.readyState !== 'loading') {
     // No use waiting for future cached data as document has finished loading.

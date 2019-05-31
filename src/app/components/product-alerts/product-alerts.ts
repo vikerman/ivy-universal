@@ -1,5 +1,5 @@
 import { Component, Input, Output } from '@angular/core';
-import { Product } from '../../shared/products';
+import { Product } from '../../shared/product';
 import { EventEmitterLite } from '../../../lib/rxjs-lite';
 
 @Component({

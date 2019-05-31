@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Product } from '../../shared/products';
+import { Product } from '../../shared/product';
 import { InitialData, PartialInputs } from '../../../lib/runtime';
 
 @Component({

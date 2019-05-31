@@ -4,13 +4,13 @@ import {
   ɵComponentType as ComponentType,
   ɵComponentDef as ComponentDef
 } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 import { NgElementStrategy, NgElementStrategyFactory } from './element-strategy';
-import { camelToDashCase } from './utils';
+import { camelToDashCase, createCustomEvent } from './utils';
 import { isNode, getComponentId } from '../utils/utils';
 import { EventContract } from '../tsaction/event_contract';
-import { RESOLVERS } from '../runtime';
+import { RESOLVERS, DISPATCHERS, DispatcherFn, DOC } from '../runtime';
 
 /** Time in milliseconds to wait before destroying the component ref when disconnected. */
 const DESTROY_DELAY = 10;
@@ -80,6 +80,12 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
   events: Array<{templateName: string, output: Observable<any>}>;
 
   /**
+   * A subscription to change, connect, and disconnect events in the custom element.
+   */
+  protected ngElementEventsSubscription: Subscription|null = null;
+
+
+  /**
    * Module containing Angular related bits.
    * Will be loaded lazily in case the Element is loaded lazily.
    */
@@ -91,9 +97,6 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
 
   /** Store backing Element for lazy initialization later */
   private element: HTMLElement;
-
-  /** Callback to tell the parent custom element component is fully ready */
-  private upgradedCallback: Function;
 
   /* Whether the backing component is being lazily loaded */
   private loading = false;
@@ -122,7 +125,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
    * Initializes a new component if one has not yet been created and cancels any scheduled
    * destruction.
    */
-  connect(element: HTMLElement, upgradeCallback: () => void): void {
+  connect(element: HTMLElement): void {
     if (this.destroyTimeoutRef !== null) {
       clearTimeout(this.destroyTimeoutRef);
       this.destroyTimeoutRef = null;
@@ -131,7 +134,6 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
 
     this.isConnected = true;
     this.element = element;
-    this.upgradedCallback = upgradeCallback;
 
     // Eagerly initialize component if ComponentType is immediately available.
     if (!this.isLazy) {
@@ -347,7 +349,7 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
       for (const propName of Object.keys(compType.ngComponentDef['inputs'])) {
         props[propName] = this.element[propName] || this.initialProperties.get(propName);
       }
-      props['__doc'] = this.doc;
+      props[DOC] = this.doc;
       let promises = [] as Array<Promise<void>>;
       for (const resolver of Array.from(resolvers.keys())) {
         try {
@@ -411,6 +413,37 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
     return injector;
   }
 
+  private getDispatcher(name: string) : DispatcherFn|undefined {
+    const dispatchMap: Map<string, DispatcherFn> = this.componentType[DISPATCHERS];
+    return dispatchMap ? dispatchMap.get(name) : undefined;
+  }
+
+  private onUpgrade() {
+    // Listen for events from the strategy and dispatch them as custom events
+    const callback = (name: string) => {
+      return value => {
+        // Call the dispatcher instead of creating a custom event if
+        // a dispatcher is attached to this @Output.
+        const customDispatcher = this.getDispatcher(name);
+        if (customDispatcher != null) {
+          customDispatcher(this.doc, name, value);
+        } else {
+          const customEvent = createCustomEvent(this.doc, name, value);
+          this.element.dispatchEvent(customEvent);
+        }
+      };
+    };
+
+    if (this.events.length > 0) {
+      this.ngElementEventsSubscription = this.events[0].output.subscribe(
+        callback(this.events[0].templateName));
+      for (let i = 1; i < this.events.length; i++) {
+        this.ngElementEventsSubscription.add(this.events[i].output.subscribe(
+          callback(this.events[i].templateName)));
+      }
+    }
+  }
+
   /**
    * Renders the component on the host element and initializes the inputs and outputs.
    */
@@ -438,17 +471,39 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
         this.rendererFactory,
     );
 
+    // Get the tsaction attribute to find custom events that need to be handled
+    // on the same element for any custom events.
+    const hookedEventTypes = new Map<string, string>();
+    if (!isNode()) {
+      const tsaction = this.element.getAttribute('tsaction');
+      if (tsaction) {
+        const handlers = tsaction.split(';');
+        for (const handler of handlers) {
+          if (handler.indexOf(':') > 0) {
+            const parts = handler.split(':');
+            if (parts[1].indexOf('.') > 0) {
+              hookedEventTypes.set(parts[0], parts[1].split('.')[0]);
+            }
+          }
+        }
+      }
+    }
+
     this.events = this.ngBits.initializeOutputs(
       this.component,
       componentType,
       type => {
-        if (this.contract) {
-          this.contract.listenToCustomEvent(type);
+        if (!isNode() && hookedEventTypes.has(type)) {
+          this.element.addEventListener(type, event => {
+            if (this.contract) {
+              this.contract.bufferEvent(event);
+            }
+          });
         }
       });
 
     // Tell the parent custom element that the component has been fully loaded!
-    this.upgradedCallback();
+    this.onUpgrade();
   }
 
   /** Set any stored initial inputs on the component's properties. */
@@ -477,6 +532,9 @@ export class LazyIvyElementStrategy<T> implements NgElementStrategy {
           onDestroy();
         }
         this.component = null;
+      }
+      if (this.ngElementEventsSubscription != null) {
+        this.ngElementEventsSubscription.unsubscribe();
       }
     }, DESTROY_DELAY) as any;
   }

@@ -1,6 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { Product } from '../../shared/products';
+import { Component, Input, OnInit, Output } from '@angular/core';
 import { InitialData } from '../../../lib/runtime';
+import { EventEmitterLite } from '../../../lib/rxjs-lite';
+import { Dispatch } from '../../../lib/store';
+
+import { Product } from '../../shared/product';
+import { ADD_TO_CART } from '../../state/actions/cart';
 
 @Component({
   template: `
@@ -20,6 +24,9 @@ export class ProductDetails implements OnInit {
   @InitialData('/assets/products.json')
   @Input() products: Product[];
 
+  @Dispatch(ADD_TO_CART)
+  @Output() addProductToCart = new EventEmitterLite<Product>();
+
   product: Product;
 
   ngOnInit(): void {
@@ -28,6 +35,6 @@ export class ProductDetails implements OnInit {
 
   addToCart() {
     window.alert('Your product has been added to the cart!');
-    // this.cartService.addToCart(this.product);
+    this.addProductToCart.emit(this.product);
   }
 }

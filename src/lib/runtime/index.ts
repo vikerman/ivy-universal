@@ -1,19 +1,22 @@
 import { isBrowser } from '../utils/utils';
 import { getCachedData, setCachedData } from '../data-cache';
+import { Subscription } from 'rxjs';
 
 export type PartialInputs<T> = {
   readonly [P in keyof T]?: T[P] extends Function ? never : T[P];
 };
 
+export const DOC = '__doc__';
+
 async function fetchInitialData(context: {}, url: string): Promise<string> {
-  if (context['__doc'] == null) {
+  if (context[DOC] == null) {
     return Promise.reject('Invalid context object passed to fetchInitialData');
   }
 
   if (isBrowser()) {
     // TODO: Should there a timeout for this? How to handle errors better.
     try {
-      return await getCachedData(context['__doc'], url);
+      return await getCachedData(context[DOC], url);
     } catch (e) {
       // Fallback to just fetching the data.
       return await (await fetch(url)).text();
@@ -30,7 +33,7 @@ async function fetchInitialData(context: {}, url: string): Promise<string> {
 
   if (!isBrowser()) {
     // Cache the fetched data.
-    setCachedData(context['__doc'], url, body);
+    setCachedData(context[DOC], url, body);
   }
 
   return body;
@@ -39,15 +42,15 @@ async function fetchInitialData(context: {}, url: string): Promise<string> {
 /** Private symbol */
 export const RESOLVERS = '__resolvers__';
 
-type ResolverFn = (ctx: {}) => Promise<{}>;
+export type ResolverFn = (ctx: {}) => Promise<{}>;
 
 /**
  * Decorator to create a resolver that fetches initial data.
  */
 export function InitialData(url: ((ctx: {}) => string) | string) {
   return (target: any, propertyKey: string) => {
-    const resolvers: Map<string, ResolverFn> = target[RESOLVERS]
-      || new Map<string, string>();
+    const resolvers: Map<string, ResolverFn> = target.constructor[RESOLVERS] ||
+      new Map<string, ResolverFn>();
     const resolver = (ctx: {}) => {
       return fetchInitialData(ctx, typeof url === 'string' ? url : url(ctx)).then(text => {
         try { 
@@ -59,5 +62,14 @@ export function InitialData(url: ((ctx: {}) => string) | string) {
     };
     resolvers.set(propertyKey, resolver);
     target.constructor[RESOLVERS] = resolvers;
-  }
+  };
 }
+
+/**
+ * Custom Dispatchers for @Output.
+ */
+
+/** Private symbol */
+export const DISPATCHERS = '__dispatchers__';
+
+export type DispatcherFn = (ctx: {}, name: string, value: {}) => void;

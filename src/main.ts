@@ -6,6 +6,7 @@ import { initRouter } from './lib/router/router';
 
 import { ROUTES } from './routes';
 import { registerDataCacheElement } from './lib/data-cache/element';
+import { initStore } from './app/state';
 
 // TODO : Move this even earlier so that chances of missing DOM events are
 // zero/low.
@@ -138,3 +139,5 @@ registerDataCacheElement();
 registerLazyCustomElements(ELEMENTS_METADATA);
 
 initRouter(ROUTES, contract);
+
+initStore(document);
