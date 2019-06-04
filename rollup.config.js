@@ -3,8 +3,13 @@ import terser from 'rollup-plugin-terser';
 import node_resolve from 'rollup-plugin-node-resolve-angular';
 import visualizer from 'rollup-plugin-visualizer';
 
+const isProduction = process.env.NODE_ENV === 'production';
+if (isProduction) {
+  console.log('Production Build:');
+}
+
 export default {
-  input: './out-tsc/app/src/main.js',
+  input: './out-tsc/src/main.js',
   output: {
     dir: 'dist/rollup',
     format: 'esm',
@@ -12,7 +17,7 @@ export default {
   },
   plugins: [
     node_resolve({
-      es2015:true,
+      es2015: true,
       module: true,
       jsnext: true,
       main: true,
@@ -24,7 +29,7 @@ export default {
         'rxjs'
       ]
     }),
-    terser.terser({
+    isProduction && terser.terser({
       ecma: 6,
       compress: {
         pure_getters: true,
@@ -34,6 +39,6 @@ export default {
         },
       }
     }),
-    visualizer({sourcemap: true, filename: './dist/stats.html'}),
+    isProduction && visualizer({sourcemap: true, filename: './dist/stats.html'}),
   ],
 }
